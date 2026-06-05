@@ -192,6 +192,45 @@
     white-space: pre;
   }
 
+  /* ── Cómo usar en Claude Code ──────────── */
+  .free-banner {
+    display: inline-block;
+    background: rgba(143,191,127,.14);
+    border: 1px solid var(--haiku);
+    color: var(--haiku);
+    font-family: 'Cinzel', serif;
+    font-size: .8rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: .35rem 1rem;
+    border-radius: 22px;
+    margin: 0 auto 2.5rem;
+  }
+  .usar-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.4rem; margin-bottom: 2.5rem; }
+  .usar-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.8rem;
+  }
+  .usar-card h3 { color: var(--gold-bright); font-size: 1.2rem; margin-bottom: .8rem; }
+  .usar-card ul { list-style: none; }
+  .usar-card li { padding-left: 1.4rem; position: relative; margin-bottom: .5rem; font-size: 1rem; }
+  .usar-card li::before { content: "⚔"; position: absolute; left: 0; color: var(--gold); }
+  .invoke {
+    display: block;
+    background: var(--bg-soft);
+    border-left: 3px solid var(--gold);
+    border-radius: 6px;
+    padding: .7rem 1rem;
+    margin: .6rem 0;
+    font-family: 'Courier New', monospace;
+    font-size: .92rem;
+    color: var(--gold-bright);
+    font-style: italic;
+  }
+  .invoke b { color: var(--gold); font-style: normal; }
+
   footer {
     text-align: center;
     padding: 3rem 1.5rem;
@@ -208,7 +247,7 @@
   <header class="hero">
     <div class="ring">⚇</div>
     <h1>La Compañía del Código</h1>
-    <p class="sub">Ocho agentes de IA que, unidos en una sola hermandad, llevan una tarea desde la idea hasta un Pull&nbsp;Request listo para mergear.</p>
+    <p class="sub">Ocho agentes de IA, una sola hermandad. Le confiás una tarea en lenguaje natural y la llevan desde la idea hasta un Pull&nbsp;Request revisado, testeado y seguro — listo para mergear.</p>
     <p class="verse">
       Un equipo para planearlos, un Coder para forjarlos,<br />
       un Reviewer para juzgarlos y en el código atarlos.
@@ -221,7 +260,7 @@
     <h2 class="section-title">¿Qué es este equipo?</h2>
     <div class="divider"></div>
     <div class="intro-panel">
-      <p>Es un <span class="highlight">equipo de agentes de IA</span> construido con <span class="highlight">LangGraph</span> y la <span class="highlight">API de Claude (Anthropic)</span>. Le das una tarea en lenguaje natural —"creá un módulo que haga X"— y la Compañía atraviesa el ciclo completo de desarrollo por vos.</p>
+      <p>Es un <span class="highlight">equipo de agentes de IA</span> construido con <span class="highlight">LangGraph</span> y la <span class="highlight">API de Claude (Anthropic)</span>. Le das una tarea en lenguaje natural —"creá un módulo que haga X"— y la Compañía atraviesa el ciclo completo de desarrollo por vos, sin que tengas que orquestar cada paso a mano.</p>
       <p>Cada agente es un especialista con su propio rol y su propio modelo de Claude. Trabajan sobre un <span class="highlight">estado compartido</span> y, lo más importante, forman un <span class="highlight">bucle de mejora</span>: el código se reescribe una y otra vez hasta pasar revisión de calidad y auditoría de seguridad, antes de avanzar.</p>
       <p>El resultado de una sola corrida: <span class="highlight">código + tests ejecutados + documentación + análisis de dependencias + descripción de PR y CHANGELOG</span>.</p>
     </div>
@@ -351,6 +390,37 @@
                                                               ├─→ Bilbo   (Doc Writer)
                                                               ├─→ Gimli   (Dependency Checker)
                                                               └─→ Frodo   (Release Manager)</div>
+  </section>
+
+  <!-- CÓMO USAR EN CLAUDE CODE -->
+  <section id="usar">
+    <h2 class="section-title">Cómo usar el equipo en Claude Code</h2>
+    <p class="section-lead">La Compañía no vive solo como programa Python: también habita dentro de <strong>Claude Code</strong> como agentes nativos, listos para convocar.</p>
+    <div style="text-align:center;">
+      <span class="free-banner">✦ Gratis con tu plan mensual · sin API key ✦</span>
+    </div>
+
+    <div class="usar-grid">
+      <div class="usar-card">
+        <h3>⚙️ Dónde viven</h3>
+        <ul>
+          <li>Cada agente es un archivo en <strong>.claude/agents/</strong> (Gandalf, Samwise, Elrond…).</li>
+          <li>Corren bajo tu <strong>suscripción</strong>, sin pago por token.</li>
+          <li>Trabajan sobre tu <strong>repositorio real</strong>: leen, editan archivos y corren tests de verdad.</li>
+        </ul>
+      </div>
+      <div class="usar-card">
+        <h3>🗣️ Cómo convocarlos</h3>
+        <p style="color:var(--muted); margin-bottom:.4rem;">Por su nombre, o pidiéndolo en lenguaje natural:</p>
+        <span class="invoke"><b>Elrond,</b> revisá <i>src/team.py</i></span>
+        <span class="invoke"><b>Aragorn,</b> audita la seguridad del login</span>
+        <span class="invoke"><b>Gandalf + Samwise + Legolas:</b> creá un validador de CUIT con tests</span>
+      </div>
+    </div>
+
+    <div class="intro-panel">
+      <p>La diferencia con el proyecto Python es clave: aquel <span class="highlight">genera un módulo aislado</span> y cobra por la API; esta versión <span class="highlight">trabaja sobre tu código real, gratis</span>, dentro de tu plan. Misma hermandad, mismos roles, mismos modelos (Opus / Sonnet / Haiku) — pero a tu lado mientras programás.</p>
+    </div>
   </section>
 
   <footer>
