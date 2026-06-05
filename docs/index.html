@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>La Compañía del Código — Equipo de Agentes de IA</title>
+<meta name="description" content="Un equipo de 8 agentes de IA (LangGraph + Claude) que automatiza el ciclo completo de desarrollo de software. Con nombres de la Tierra Media." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d0b07;
+    --bg-soft: #16120b;
+    --panel: #1d1810;
+    --gold: #c9a23a;
+    --gold-bright: #f0d27a;
+    --ink: #e8e0cf;
+    --muted: #9c9078;
+    --line: #3a3122;
+    --opus: #c9a23a;
+    --sonnet: #7fa8c9;
+    --haiku: #8fbf7f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 19px;
+    line-height: 1.65;
+    overflow-x: hidden;
+  }
+  h1, h2, h3, .cinzel { font-family: 'Cinzel', serif; letter-spacing: .02em; }
+  a { color: var(--gold-bright); }
+
+  /* ── Hero ─────────────────────────────── */
+  .hero {
+    position: relative;
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(201,162,58,.14), transparent 60%),
+      radial-gradient(ellipse at 50% 120%, rgba(201,162,58,.10), transparent 55%),
+      var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  .ring {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    border: 3px solid var(--gold);
+    box-shadow: 0 0 40px rgba(201,162,58,.5), inset 0 0 25px rgba(201,162,58,.4);
+    margin-bottom: 2rem;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem;
+    animation: glow 4s ease-in-out infinite;
+  }
+  @keyframes glow {
+    0%,100% { box-shadow: 0 0 40px rgba(201,162,58,.45), inset 0 0 25px rgba(201,162,58,.35); }
+    50%     { box-shadow: 0 0 65px rgba(201,162,58,.7), inset 0 0 35px rgba(201,162,58,.55); }
+  }
+  .hero h1 {
+    font-size: clamp(2.2rem, 6vw, 4.5rem);
+    font-weight: 900;
+    color: var(--gold-bright);
+    text-shadow: 0 2px 30px rgba(201,162,58,.35);
+    line-height: 1.1;
+  }
+  .hero .sub {
+    font-style: italic;
+    color: var(--muted);
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+    margin-top: 1.2rem;
+    max-width: 720px;
+  }
+  .verse {
+    margin-top: 2.5rem;
+    color: var(--gold);
+    font-style: italic;
+    font-size: 1.05rem;
+    line-height: 1.9;
+    opacity: .85;
+  }
+  .scroll-hint { margin-top: 3rem; color: var(--muted); font-size: .9rem; letter-spacing: .2em; text-transform: uppercase; }
+
+  /* ── Layout ───────────────────────────── */
+  section { padding: 5rem 1.5rem; max-width: 1080px; margin: 0 auto; }
+  .section-title {
+    text-align: center;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    color: var(--gold-bright);
+    margin-bottom: .6rem;
+  }
+  .section-lead {
+    text-align: center;
+    color: var(--muted);
+    max-width: 700px;
+    margin: 0 auto 3rem;
+    font-size: 1.15rem;
+  }
+  .divider {
+    width: 200px; height: 1px; margin: 0 auto 3rem;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  /* ── What is it ───────────────────────── */
+  .intro-panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 2.5rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,.4);
+  }
+  .intro-panel p + p { margin-top: 1rem; }
+  .highlight { color: var(--gold-bright); font-weight: 600; }
+
+  /* ── Applications ─────────────────────── */
+  .apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1.4rem; }
+  .app {
+    background: linear-gradient(160deg, var(--bg-soft), var(--panel));
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.8rem;
+    transition: transform .25s, border-color .25s, box-shadow .25s;
+  }
+  .app:hover { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 12px 30px rgba(201,162,58,.15); }
+  .app .icon { font-size: 2rem; margin-bottom: .8rem; }
+  .app h3 { color: var(--gold-bright); font-size: 1.25rem; margin-bottom: .5rem; }
+  .app p { color: var(--ink); font-size: 1rem; line-height: 1.55; }
+
+  /* ── Fellowship / Agents ──────────────── */
+  .fellowship { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+  .agent {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--gold);
+    border-radius: 12px;
+    padding: 1.6rem 1.8rem;
+    position: relative;
+    transition: transform .25s, box-shadow .25s;
+  }
+  .agent:hover { transform: translateY(-4px); box-shadow: 0 12px 34px rgba(0,0,0,.5); }
+  .agent.opus   { border-left-color: var(--opus); }
+  .agent.sonnet { border-left-color: var(--sonnet); }
+  .agent.haiku  { border-left-color: var(--haiku); }
+  .agent .role-emoji { font-size: 1.8rem; }
+  .agent .name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gold-bright);
+    margin: .4rem 0 .1rem;
+  }
+  .agent .job { font-style: italic; color: var(--muted); font-size: 1rem; }
+  .agent .desc { margin-top: .8rem; font-size: 1rem; line-height: 1.5; color: var(--ink); }
+  .badge {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: .2rem .7rem;
+    border-radius: 20px;
+    font-family: 'Cinzel', serif;
+    font-size: .72rem;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .badge.opus   { background: rgba(201,162,58,.15); color: var(--opus); border: 1px solid var(--opus); }
+  .badge.sonnet { background: rgba(127,168,201,.12); color: var(--sonnet); border: 1px solid var(--sonnet); }
+  .badge.haiku  { background: rgba(143,191,127,.12); color: var(--haiku); border: 1px solid var(--haiku); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; margin-bottom: 2.5rem; font-size: .95rem; }
+  .legend span { display: flex; align-items: center; gap: .5rem; color: var(--muted); }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.opus { background: var(--opus); } .dot.sonnet { background: var(--sonnet); } .dot.haiku { background: var(--haiku); }
+
+  /* ── Flow ─────────────────────────────── */
+  .flow {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 2.5rem 2rem;
+    font-family: 'Courier New', monospace;
+    font-size: .92rem;
+    line-height: 1.9;
+    color: var(--gold);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  footer {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-style: italic;
+  }
+  footer .verse { margin-top: 1rem; font-size: .95rem; }
+</style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="ring">⚇</div>
+    <h1>La Compañía del Código</h1>
+    <p class="sub">Ocho agentes de IA que, unidos en una sola hermandad, llevan una tarea desde la idea hasta un Pull&nbsp;Request listo para mergear.</p>
+    <p class="verse">
+      Un equipo para planearlos, un Coder para forjarlos,<br />
+      un Reviewer para juzgarlos y en el código atarlos.
+    </p>
+    <p class="scroll-hint">↓ desciende a las minas ↓</p>
+  </header>
+
+  <!-- QUÉ ES -->
+  <section id="que-es">
+    <h2 class="section-title">¿Qué es este equipo?</h2>
+    <div class="divider"></div>
+    <div class="intro-panel">
+      <p>Es un <span class="highlight">equipo de agentes de IA</span> construido con <span class="highlight">LangGraph</span> y la <span class="highlight">API de Claude (Anthropic)</span>. Le das una tarea en lenguaje natural —"creá un módulo que haga X"— y la Compañía atraviesa el ciclo completo de desarrollo por vos.</p>
+      <p>Cada agente es un especialista con su propio rol y su propio modelo de Claude. Trabajan sobre un <span class="highlight">estado compartido</span> y, lo más importante, forman un <span class="highlight">bucle de mejora</span>: el código se reescribe una y otra vez hasta pasar revisión de calidad y auditoría de seguridad, antes de avanzar.</p>
+      <p>El resultado de una sola corrida: <span class="highlight">código + tests ejecutados + documentación + análisis de dependencias + descripción de PR y CHANGELOG</span>.</p>
+    </div>
+  </section>
+
+  <!-- APLICACIONES -->
+  <section id="aplicaciones">
+    <h2 class="section-title">¿Para qué sirve? — Aplicaciones</h2>
+    <p class="section-lead">Dónde esta Compañía te ahorra horas de trabajo en proyectos reales.</p>
+    <div class="apps">
+      <div class="app">
+        <div class="icon">🧩</div>
+        <h3>Prototipado rápido de módulos</h3>
+        <p>Convertí una idea en un módulo Python tipado, testeado y documentado en una sola corrida. Ideal para utilidades, parsers, clientes de API o helpers autocontenidos.</p>
+      </div>
+      <div class="app">
+        <div class="icon">🛡️</div>
+        <h3>Código con seguridad incorporada</h3>
+        <p>Cada entrega pasa por un auditor que combina razonamiento de Claude con <strong>bandit</strong> (SAST real): detecta inyección, secrets hardcodeados y riesgos OWASP antes de que lleguen al repo.</p>
+      </div>
+      <div class="app">
+        <div class="icon">🧪</div>
+        <h3>Tests generados y ejecutados de verdad</h3>
+        <p>No solo escribe tests: los corre con pytest en un sandbox y te devuelve el resultado real. Sabés si el código funciona, no solo si "parece" funcionar.</p>
+      </div>
+      <div class="app">
+        <div class="icon">📚</div>
+        <h3>Enseñar arquitectura multi-agente</h3>
+        <p>Un caso de estudio vivo de patrones de coordinación: grafo, bucles condicionales, fan-out paralelo y asignación de modelos por criticidad. Perfecto para aprender LangGraph.</p>
+      </div>
+      <div class="app">
+        <div class="icon">🚀</div>
+        <h3>Acelerar el flujo de PR</h3>
+        <p>Genera el título en formato conventional commits, la descripción del PR, la entrada de CHANGELOG y un checklist de QA para el revisor humano. El "papeleo" del release, hecho.</p>
+      </div>
+      <div class="app">
+        <div class="icon">📦</div>
+        <h3>Higiene de dependencias</h3>
+        <p>Lista las librerías usadas, sugiere versiones pinneadas seguras, marca CVEs conocidos y licencias incompatibles, y arma el requirements.txt.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LA COMPAÑÍA -->
+  <section id="companeros">
+    <h2 class="section-title">La Hermandad — los ocho agentes</h2>
+    <p class="section-lead">Cada miembro lleva un nombre de la Tierra Media y, entre paréntesis, su oficio real en el equipo. El color marca qué modelo de Claude lo impulsa.</p>
+
+    <div class="legend">
+      <span><span class="dot opus"></span> Opus 4.8 — razonamiento crítico</span>
+      <span><span class="dot sonnet"></span> Sonnet 4.6 — producción en bucle</span>
+      <span><span class="dot haiku"></span> Haiku 4.5 — tareas definidas</span>
+    </div>
+
+    <div class="fellowship">
+      <div class="agent opus">
+        <div class="role-emoji">🏗️</div>
+        <div class="name">Gandalf <span style="font-weight:400; color:var(--muted); font-size:1rem;">(Arquitecto)</span></div>
+        <div class="desc">El guía sabio. Descompone la tarea en un plan: estructura de archivos, firmas de funciones y criterios de aceptación. Abre la marcha.</div>
+        <span class="badge opus">Opus 4.8</span>
+      </div>
+
+      <div class="agent sonnet">
+        <div class="role-emoji">💻</div>
+        <div class="name">Samwise <span style="font-weight:400; color:var(--muted); font-size:1rem;">(Coder)</span></div>
+        <div class="desc">El leal que carga el peso. Escribe el código Python tipado y, en cada vuelta del bucle, lo reescribe incorporando el feedback de los demás.</div>
+        <span class="badge sonnet">Sonnet 4.6</span>
+      </div>
+
+      <div class="agent opus">
+        <div class="role-emoji">🔍</div>
+        <div class="name">Elrond <span style="font-weight:400; color:var(--muted); font-size:1rem;">(Reviewer)</span></div>
+        <div class="desc">Convoca el concilio. Juzga calidad: correctitud, edge cases, SOLID, deuda técnica. Si rechaza, devuelve el código a Samwise.</div>
+        <span class="badge opus">Opus 4.8</span>
+      </div>
+
+      <div class="agent opus">
+        <div class="role-emoji">🔒</div>
+        <div class="name">Aragorn <span style="font-weight:400; color:var(--muted); font-size:1rem;">(Security Auditor)</span></div>
+        <div class="desc">El montaraz que vigila las amenazas ocultas. Audita seguridad (OWASP, secrets, inyección) apoyándose en <strong>bandit</strong> como herramienta real.</div>
+        <span class="badge opus">Opus 4.8</span>
+      </div>
+
+      <div class="agent sonnet">
+        <div class="role-emoji">🧪</div>
+        <div class="name">Legolas <span style="font-weight:400; color:var(--muted); font-size:1rem;">(Tester)</span></div>
+        <div class="desc">Ojos élficos que ven lejos. Genera tests pytest y los ejecuta de verdad en un sandbox, devolviendo el resultado real.</div>
+        <span class="badge sonnet">Sonnet 4.6</span>
+      </div>
+
+      <div class="agent haiku">
+        <div class="role-emoji">📝</div>
+        <div class="name">Bilbo <span style="font-weight:400; color:var(--muted); font-size:1rem;">(Doc Writer)</span></div>
+        <div class="desc">El autor del Libro Rojo. Escribe docstrings Google-style, un README con ejemplos de uso y la descripción de tipos y excepciones.</div>
+        <span class="badge haiku">Haiku 4.5</span>
+      </div>
+
+      <div class="agent haiku">
+        <div class="role-emoji">📦</div>
+        <div class="name">Gimli <span style="font-weight:400; color:var(--muted); font-size:1rem;">(Dependency Checker)</span></div>
+        <div class="desc">El artesano que conoce los materiales sanos. Analiza librerías, sugiere versiones seguras, detecta CVEs y licencias, y arma el requirements.txt.</div>
+        <span class="badge haiku">Haiku 4.5</span>
+      </div>
+
+      <div class="agent haiku">
+        <div class="role-emoji">🚀</div>
+        <div class="name">Frodo <span style="font-weight:400; color:var(--muted); font-size:1rem;">(Release Manager)</span></div>
+        <div class="desc">El portador que completa la misión. Prepara el título del PR, su descripción, la entrada de CHANGELOG y el checklist de QA para el humano.</div>
+        <span class="badge haiku">Haiku 4.5</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- EL CAMINO -->
+  <section id="camino">
+    <h2 class="section-title">El camino de la tarea</h2>
+    <p class="section-lead">Así fluye el trabajo por el grafo. El bucle central es el corazón: el código no avanza hasta ganarse la aprobación.</p>
+    <div class="flow">Tarea
+  └─→ Gandalf (Arquitecto)
+        └─→ Samwise (Coder) ◄────────────────────────┐
+              └─→ Elrond (Reviewer)                  │ rechaza + feedback
+                    ├─→ (rechaza) ───────────────────┘
+                    └─→ (aprueba) → Aragorn (Security Auditor)
+                                          ├─→ (rechaza) → Samwise (bucle)
+                                          └─→ (aprueba) → [en paralelo]
+                                                              ├─→ Legolas (Tester)
+                                                              ├─→ Bilbo   (Doc Writer)
+                                                              ├─→ Gimli   (Dependency Checker)
+                                                              └─→ Frodo   (Release Manager)</div>
+  </section>
+
+  <footer>
+    <p>Construido con LangGraph + Claude · 8 agentes, una sola hermandad.</p>
+    <p class="verse">"Aún hay esperanza mientras la Compañía permanezca fiel."</p>
+  </footer>
+
+</body>
+</html>
