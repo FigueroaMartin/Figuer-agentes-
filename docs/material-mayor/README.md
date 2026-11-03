@@ -10,7 +10,7 @@ Sistema web para hacer seguimiento a las **Solicitudes de Reparación o Mantenim
 | **Máquinas en reparación** | Tabla de solicitudes activas con filtros por compañía, taller y estado de servicio; avance en 8 hitos, tiempo en la etapa con semáforo y botón para marcar el siguiente hito. |
 | **Nueva SRM** | El mismo formulario de la planilla SRM (luces, dirección, frenos, suspensión, neumáticos, chassis, cabina, motor, cuerpo bomba, accesorios, alarmas, mantención, torre de iluminación y otros). Asigna automáticamente el Nº correlativo por compañía y año. |
 | **Historial** | Búsqueda en todas las solicitudes y exportación a Excel (CSV). |
-| **Flota** | Alta y edición de máquinas, o carga masiva pegando filas desde Excel. |
+| **Flota** | Panel al estilo del de GP Ormeño: una tarjeta por carro con su estado (disponible, con observaciones, fuera de servicio, en taller), filtros, avisos de documentos vencidos y calendario de flota (línea de tiempo de 14, 30 o 60 días). Cada carro tiene su ficha con la SRM activa, km, horómetro y próxima mantención (cada 250 h), documentos (revisión técnica, permiso de circulación, SOAP y certificación de escala) con "Marcar renovado", e historial. Más abajo se administra la flota: alta, edición o carga pegando filas desde Excel. |
 | **Ajustes** | Conexión a Google Sheets, correo de envío, plazos del semáforo, respaldo/restauración y datos de demostración. |
 
 Desde el detalle de cada solicitud se puede:

@@ -150,6 +150,74 @@
   ul.fallas li { margin: 2px 0; }
   .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; max-width: calc(100vw - 32px); }
   .toast.show { opacity: 1; }
+  /* Panel de flota: una tarjeta por carro + calendario */
+  :root { --icon-bg: #e9ecf0; --icon-ink: #4a5563; --tl-red: #b42332; --tl-red-soft: #fdecef; --tl-amber: #ad6510; --tl-amber-soft: #fff3d9; --tl-grey: #8a94a3; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --icon-bg: #2a3038; --icon-ink: #b9c2ce; --tl-red: #ffb5be; --tl-red-soft: #4a252c; --tl-amber: #f4c572; --tl-amber-soft: #42361e; --tl-grey: #8d97a5; } }
+  :root[data-theme="dark"] { --icon-bg: #2a3038; --icon-ink: #b9c2ce; --tl-red: #ffb5be; --tl-red-soft: #4a252c; --tl-amber: #f4c572; --tl-amber-soft: #42361e; --tl-grey: #8d97a5; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+  .chip b { font-weight: 700; margin-left: 4px; }
+  .fl-toolbar { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .fl-selects { display: flex; gap: 8px; flex-wrap: wrap; }
+  .fl-selects select { width: auto; min-width: 150px; }
+  .fl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+  .carro { font: inherit; color: var(--ink); text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; min-width: 0; }
+  .carro:hover { border-color: var(--muted); }
+  .carro:focus-visible, .chip:focus-visible, .tl-bar:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .carro-top { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: center; }
+  .carro-top h4 { margin: 2px 0 0; font-size: 15px; line-height: 1.3; }
+  .carro .linea { font-size: 13px; color: var(--muted); }
+  .carro .linea.r { color: var(--crit); }
+  .carro .doc { font-size: 12px; }
+  .carro .ver { margin-top: auto; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .ico { display: inline-flex; align-items: center; justify-content: center; background: var(--icon-bg); border-radius: 8px; color: var(--icon-ink); flex: none; }
+  .ico svg { display: block; }
+  .ico.t { width: 64px; height: 44px; } .ico.t svg { width: 56px; height: 36px; }
+  .ico.f { width: 112px; height: 74px; } .ico.f svg { width: 104px; height: 66px; }
+  .ico.l { width: 42px; height: 30px; } .ico.l svg { width: 34px; height: 22px; }
+  .c-g { color: var(--green); } .c-a { color: var(--amber); } .c-r { color: var(--crit); }
+  .aviso { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; border-left: 4px solid var(--amber); background: var(--amber-soft); padding: 12px 14px; border-radius: 6px; font-size: 14px; margin-bottom: 16px; }
+  .aviso.r { border-color: var(--crit); background: var(--crit-soft); }
+  /* Calendario */
+  .tl-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  .tl-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; margin: 10px 0; }
+  .tl-legend span { display: inline-flex; gap: 6px; align-items: center; }
+  .tl-legend i { width: 22px; height: 12px; border-radius: 3px; border: 1px solid; display: inline-block; }
+  .tl-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; max-width: 100%; }
+  .tl { --col: 34px; --left: 190px; width: max(100%, calc(var(--left) + var(--dias) * var(--col))); }
+  .tl-row { display: grid; grid-template-columns: var(--left) minmax(0, 1fr); border-bottom: 1px solid var(--line); }
+  .tl-row:last-child { border-bottom: 0; }
+  .tl-fix { position: sticky; left: 0; z-index: 3; background: var(--panel); border-right: 1px solid var(--line); padding: 8px 10px; display: flex; gap: 8px; align-items: center; min-width: 0; }
+  button.tl-fix { font: inherit; color: var(--ink); border: 0; border-right: 1px solid var(--line); text-align: left; cursor: pointer; }
+  .tl-fix strong { font-size: 12.5px; display: block; }
+  .tl-days, .tl-grid, .tl-cols { display: grid; grid-template-columns: repeat(var(--dias), minmax(24px, 1fr)); }
+  .tl-day { font-size: 11px; text-align: center; padding: 6px 0; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 1px; }
+  .tl-day span { color: var(--muted); font-size: 10px; }
+  .tl-we { background: var(--bg); }
+  .tl-hoy { position: relative; }
+  .tl-hoy::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: var(--amber); pointer-events: none; z-index: 2; }
+  .tl-grid { position: relative; align-items: center; min-height: 46px; }
+  .tl-cols { position: absolute; inset: 0; pointer-events: none; }
+  .tl-cols > div { border-right: 1px solid var(--line); }
+  .tl-bar { position: relative; z-index: 2; grid-row: 1; height: 26px; margin: 0 1px; padding: 0 6px; border-radius: 5px; font: inherit; font-size: 11px; border: 1px solid; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: left; cursor: pointer; min-width: 0; }
+  .tl-fs { color: var(--tl-red); background: var(--tl-red-soft); border-color: var(--tl-red); border-left-width: 4px; }
+  .tl-taller { color: var(--ink); border-color: var(--tl-grey); background: repeating-linear-gradient(135deg, var(--icon-bg), var(--icon-bg) 5px, var(--panel) 5px, var(--panel) 9px); }
+  .tl-obs { color: var(--tl-amber); background: var(--tl-amber-soft); border-color: var(--tl-amber); border-style: dashed; }
+  .tl-doc { color: var(--blue); background: transparent; border: 0; font-size: 15px; padding: 0; text-align: center; }
+  .tl-sigue { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+  .tl-viene { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+  .tl-list { display: none; }
+  .tl-list article { border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 8px; }
+  .tl-list .tl-bar { height: auto; white-space: normal; padding: 8px; width: 100%; }
+  [data-vista="lista"] .tl-scroll { display: none; }
+  [data-vista="lista"] .tl-list { display: grid; gap: 10px; }
+  .prog { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .prog i { display: block; height: 100%; background: var(--green); }
+  .prog.a i { background: var(--amber); } .prog.r i { background: var(--crit); }
+  .doc-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  details.card > summary { cursor: pointer; font-weight: 700; color: var(--green); font-size: 16px; }
+  @media (max-width: 767px) { .tl { --left: 140px; } }
   #print-area { display: none; }
   @media print {
     body { background: #fff; color: #000; font-size: 11px; }
@@ -294,9 +362,22 @@
 
   <!-- FLOTA -->
   <section class="view" id="view-flota">
+    <div class="kpis" id="fl-kpis"></div>
+    <div id="fl-aviso"></div>
     <div class="card">
-      <h2>Flota de material mayor</h2>
-      <form id="form-maq" class="form-grid" autocomplete="off">
+      <div class="fl-toolbar">
+        <div class="chips" id="fl-chips" role="group" aria-label="Filtrar flota"></div>
+        <div class="fl-selects">
+          <select id="fl-cia" aria-label="Compañía"></select>
+          <select id="fl-tipo" aria-label="Tipo de máquina"></select>
+        </div>
+      </div>
+      <div class="fl-grid" id="fl-grid"></div>
+    </div>
+    <div class="card" id="fl-cal"></div>
+    <details class="card" id="flota-admin">
+      <summary>Administrar flota: agregar, editar o cargar desde Excel</summary>
+      <form id="form-maq" style="margin-top:14px" class="form-grid" autocomplete="off">
         <input type="hidden" name="maqId" />
         <label>Código *<input name="codigo" required placeholder="B-10" /></label>
         <label>Tipo *<select name="tipo" required></select></label>
@@ -314,7 +395,7 @@
       <div class="row-actions" style="margin-top:8px"><button class="btn sec" id="flota-import">Importar filas</button></div>
       <h3>Máquinas registradas <span class="muted small" id="flota-count"></span></h3>
       <div class="table-wrap"><table id="tbl-flota"></table></div>
-    </div>
+    </details>
   </section>
 
   <!-- AJUSTES -->
@@ -1037,6 +1118,12 @@ function renderFlota() {
     : `<tbody><tr><td class="empty">Sin máquinas. Agréguelas arriba o pegue la flota desde Excel.</td></tr></tbody>`;
 }
 
+function docsBase(tipo) {
+  const tipos = ["Revisión técnica", "Permiso de circulación", "SOAP"];
+  if (categoria(tipo) === "escala") tipos.push("Certificación de escala");
+  return tipos.map((t) => ({ id: uid(), tipo: t, vence: "" }));
+}
+
 function normCodigo(c) { return String(c || "").trim().toUpperCase().replace(/\s+/g, ""); }
 
 async function guardarMaquina(ev) {
@@ -1047,7 +1134,7 @@ async function guardarMaquina(ev) {
   if (dup) { toast(`Ya existe una máquina ${codigo}.`); return; }
   const datos = { codigo, tipo: f.tipo.value, compania: Number(f.compania.value), marca: f.marca.value.trim(), modelo: f.modelo.value.trim(), anio: f.anio.value };
   if (f.maqId.value) Object.assign(maquina(f.maqId.value), datos);
-  else state.fleet.push(Object.assign({ id: uid(), km: "" }, datos));
+  else state.fleet.push(Object.assign({ id: uid(), km: "", documentos: docsBase(datos.tipo) }, datos));
   await guardar();
   f.reset();
   f.maqId.value = "";
@@ -1067,13 +1154,271 @@ async function importarFlota() {
     const tipo = (c[1] || codigo.replace(/[-\d]+$/, "")).toUpperCase();
     const datos = { codigo, tipo, compania: cia, marca: c[3] || "", modelo: c[4] || "", anio: c[5] || "" };
     const ex = state.fleet.find((m) => m.codigo === codigo);
-    if (ex) { Object.assign(ex, datos); act++; } else { state.fleet.push(Object.assign({ id: uid(), km: "" }, datos)); nuevas++; }
+    if (ex) { Object.assign(ex, datos); act++; } else { state.fleet.push(Object.assign({ id: uid(), km: "", documentos: docsBase(tipo) }, datos)); nuevas++; }
   });
   if (state.demo && nuevas) state.demo = false;
   await guardar();
   $("#flota-paste").value = "";
   renderTodo();
   toast(`${nuevas} nuevas, ${act} actualizadas${malas ? `, ${malas} filas ignoradas` : ""}.`);
+}
+
+/* ===================== Panel de flota (un objeto por carro) ===================== */
+
+const INTERVALO_MANT_H = 250; // horas de motor entre mantenciones preventivas
+const fl = { filtro: "Todas", cia: "", tipo: "", rango: 30, vista: "", todas: false };
+
+function categoria(tipo) {
+  if (["Q", "M", "MX", "BM"].includes(tipo)) return "escala";
+  if (["RX", "RH", "RM", "H", "UD"].includes(tipo)) return "rescate";
+  if (["Z", "BT"].includes(tipo)) return "cisterna";
+  return "bomba";
+}
+const NOMBRE_CAT = { bomba: "Bomba", escala: "Portaescalas / mecánica", rescate: "Rescate / especialidad", cisterna: "Cisterna" };
+
+function iconoCarro(tipo, tam = "t") {
+  const c = categoria(tipo);
+  const cab = `<path d="M3 31V19l5-9h12v21Z" fill="currentColor"/><rect x="6.5" y="12.5" width="10" height="6" rx="1" fill="var(--icon-bg)"/><rect x="8" y="7.5" width="9" height="2.2" rx="1" fill="var(--red)"/>`;
+  const ruedas = [13, 40, 52].map((x) => `<circle cx="${x}" cy="32" r="5" fill="currentColor" stroke="var(--icon-bg)" stroke-width="1.2"/><circle cx="${x}" cy="32" r="2" fill="var(--icon-bg)"/>`).join("");
+  const cuerpo = {
+    bomba: `<rect x="20" y="12" width="41" height="19" rx="1.5" fill="currentColor"/><path d="M28 14v15M36 14v15M44 14v15M52 14v15" stroke="var(--icon-bg)" stroke-width="1"/><rect x="24" y="8" width="30" height="4" rx="1" fill="currentColor"/>`,
+    escala: `<rect x="20" y="19" width="41" height="12" rx="1.5" fill="currentColor"/><rect x="6" y="10" width="57" height="5" rx="1" fill="currentColor"/><path d="M10 11v3M16 11v3M22 11v3M28 11v3M34 11v3M40 11v3M46 11v3M52 11v3M58 11v3" stroke="var(--icon-bg)" stroke-width="1.2"/><path d="M50 15v4" stroke="currentColor" stroke-width="3"/>`,
+    rescate: `<rect x="20" y="7" width="41" height="24" rx="2" fill="currentColor"/><path d="M33 9v20M47 9v20" stroke="var(--icon-bg)" stroke-width="1"/><rect x="23" y="11" width="7" height="4" rx="1" fill="var(--icon-bg)"/>`,
+    cisterna: `<rect x="20" y="27" width="41" height="4" fill="currentColor"/><rect x="21" y="11" width="40" height="16" rx="8" fill="currentColor"/><path d="M31 12v14M51 12v14" stroke="var(--icon-bg)" stroke-width="1"/>`,
+  }[c];
+  return `<span class="ico ${tam}"><svg viewBox="0 0 64 40" role="img" aria-label="${esc(NOMBRE_CAT[c])}">${cuerpo}${cab}${ruedas}</svg></span>`;
+}
+
+function srmsDe(m) { return state.srms.filter((s) => s.maquinaId === m.id); }
+
+function estadoCarro(m) {
+  const act = abiertas().filter((s) => s.maquinaId === m.id);
+  const fs = act.filter((s) => s.fueraServicio);
+  if (fs.some((s) => s.etapa >= 5)) return { txt: "En taller", cls: "r", srm: fs.find((s) => s.etapa >= 5) };
+  if (fs.length) return { txt: "Fuera de servicio", cls: "r", srm: fs[0] };
+  if (act.length) return { txt: "Con observaciones", cls: "a", srm: act[0] };
+  return { txt: "Disponible", cls: "g", srm: null };
+}
+
+function estadoDoc(d) {
+  if (!d.vence) return "No aplica";
+  const dias = Math.floor((new Date(d.vence + "T12:00:00") - Date.now()) / DAY);
+  return dias < 0 ? "Vencido" : dias <= 30 ? "Por vencer" : "Al día";
+}
+const clsDoc = (e) => e === "Vencido" ? "c-r" : e === "Por vencer" ? "c-a" : e === "Al día" ? "c-g" : "muted";
+const docsAlerta = (m) => (m.documentos || []).filter((d) => ["Vencido", "Por vencer"].includes(estadoDoc(d)))
+  .sort((a, b) => a.vence.localeCompare(b.vence));
+
+function diasFueraDeServicioMes(m) {
+  const ini = new Date(); ini.setDate(1); ini.setHours(0, 0, 0, 0);
+  let total = 0;
+  srmsDe(m).filter((s) => s.fueraServicio).forEach((s) => {
+    const a = Math.max(new Date(s.creada).getTime(), ini.getTime());
+    const b = s.etapa === ETAPAS.length - 1 ? new Date(s.hitos[s.hitos.length - 1].fecha).getTime() : Date.now();
+    if (b > a) total += Math.ceil((b - a) / DAY);
+  });
+  return total;
+}
+
+function renderFlotaPanel() {
+  const fleet = state.fleet;
+  const estados = new Map(fleet.map((m) => [m.id, estadoCarro(m)]));
+  const cuenta = (t) => fleet.filter((m) => estados.get(m.id).txt === t).length;
+  const disp = cuenta("Disponible") + cuenta("Con observaciones");
+  const vencidos = fleet.flatMap((m) => (m.documentos || []).filter((d) => estadoDoc(d) === "Vencido").map((d) => ({ m, d })));
+  const porVencer = fleet.flatMap((m) => (m.documentos || []).filter((d) => estadoDoc(d) === "Por vencer").map((d) => ({ m, d })));
+  const mantVencida = fleet.filter((m) => m.horometro && m.mantencionHoras !== undefined && m.horometro - m.mantencionHoras >= INTERVALO_MANT_H);
+  const diasMes = fleet.reduce((a, m) => a + diasFueraDeServicioMes(m), 0);
+
+  $("#fl-kpis").innerHTML = [
+    ["Disponibles hoy", disp, `${fleet.length ? Math.round((disp / fleet.length) * 100) : 0}% de la flota`],
+    ["Fuera de servicio", cuenta("Fuera de servicio") + cuenta("En taller"), `${cuenta("En taller")} en taller`],
+    ["Con observaciones", cuenta("Con observaciones"), "En servicio, con SRM abierta"],
+    ["Días fuera de servicio", diasMes, "Suma del mes en curso"],
+    ["Documentos", vencidos.length + porVencer.length, `${vencidos.length} vencidos · ${porVencer.length} por vencer`],
+  ].map(([t, v, d]) => `<div class="kpi"><span>${esc(t)}</span><b>${esc(v)}</b><span class="small">${esc(d)}</span></div>`).join("");
+
+  const sinRevision = vencidos.filter((x) => x.d.tipo === "Revisión técnica").map((x) => x.m.codigo);
+  $("#fl-aviso").innerHTML = (vencidos.length || porVencer.length || mantVencida.length)
+    ? `<div class="aviso ${vencidos.length ? "r" : ""}" role="status"><span aria-hidden="true">⚠</span><div>
+        ${vencidos.length ? `<b class="c-r">${vencidos.length} documento${vencidos.length === 1 ? "" : "s"} vencido${vencidos.length === 1 ? "" : "s"}</b>` : ""}
+        ${vencidos.length && porVencer.length ? " y " : ""}${porVencer.length ? `<b class="c-a">${porVencer.length} por vencer en 30 días</b>` : ""}.
+        ${sinRevision.length ? ` ${esc(sinRevision.join(", "))} no ${sinRevision.length === 1 ? "debe" : "deben"} circular hasta renovar la revisión técnica.` : ""}
+        ${mantVencida.length ? ` Mantención preventiva vencida: ${esc(mantVencida.map((m) => m.codigo).join(", "))}.` : ""}
+      </div></div>`
+    : "";
+
+  // Filtros
+  const filtros = ["Todas", "Disponibles", "Fuera de servicio", "En taller", "Con observaciones", "Documentos por renovar"];
+  const pasa = (m, f) => {
+    const e = estados.get(m.id).txt;
+    return f === "Todas" || (f === "Disponibles" ? e === "Disponible" : f === "Fuera de servicio" ? (e === "Fuera de servicio" || e === "En taller")
+      : f === "Documentos por renovar" ? docsAlerta(m).length > 0 : e === f);
+  };
+  $("#fl-chips").innerHTML = filtros.map((f) => `<button class="chip" data-fl-filtro="${esc(f)}" aria-pressed="${fl.filtro === f}">${esc(f)}<b>${fleet.filter((m) => pasa(m, f)).length}</b></button>`).join("");
+  opcionesCia($("#fl-cia"));
+  $("#fl-cia").options[0].textContent = "Todas las compañías";
+  $("#fl-cia").value = fl.cia;
+  const tipos = Array.from(new Set(fleet.map((m) => m.tipo))).sort((a, b) => TIPOS.indexOf(a) - TIPOS.indexOf(b));
+  $("#fl-tipo").innerHTML = `<option value="">Todos los tipos</option>` + tipos.map((t) => `<option>${esc(t)}</option>`).join("");
+  $("#fl-tipo").value = fl.tipo;
+
+  const lista = fleet
+    .filter((m) => pasa(m, fl.filtro))
+    .filter((m) => fl.cia === "" || String(m.compania) === fl.cia)
+    .filter((m) => fl.tipo === "" || m.tipo === fl.tipo)
+    .sort((a, b) => ({ r: 0, a: 1, g: 2 }[estados.get(a.id).cls] - { r: 0, a: 1, g: 2 }[estados.get(b.id).cls]) || a.compania - b.compania || a.codigo.localeCompare(b.codigo, "es", { numeric: true }));
+
+  $("#fl-grid").innerHTML = lista.length ? lista.map((m) => {
+    const e = estados.get(m.id);
+    let linea;
+    if (!e.srm) linea = "Disponible hoy";
+    else {
+      const dias = diasDesde(e.srm.creada);
+      linea = e.txt === "Con observaciones"
+        ? `SRM Nº ${e.srm.nroSolicitudCia} · ${ETAPAS[e.srm.etapa].nombre}`
+        : `${e.srm.taller ? esc(e.srm.taller) + " · " : ""}${dias} día${dias === 1 ? "" : "s"} fuera de servicio`;
+    }
+    const doc = docsAlerta(m)[0];
+    return `<button class="carro" data-ficha="${esc(m.id)}">
+      <div class="carro-top">${iconoCarro(m.tipo)}<div style="min-width:0"><div class="muted small">${esc(ciaLabel(m.compania))} · ${esc(m.tipo)}</div><h4>${esc(m.codigo)}${m.marca ? " · " + esc([m.marca, m.modelo].filter(Boolean).join(" ")) : ""}</h4></div></div>
+      <div><span class="pill ${e.cls}">${esc(e.txt)}</span></div>
+      <div class="linea ${e.cls === "r" ? "r" : ""}">${linea}</div>
+      ${doc ? `<div class="doc ${clsDoc(estadoDoc(doc))}">${esc(doc.tipo)} · ${esc(estadoDoc(doc))} ${fmtFecha(doc.vence)}</div>` : ""}
+      <span class="ver">Ver ficha ›</span>
+    </button>`;
+  }).join("") : `<p class="empty">No hay carros con estos filtros.</p>`;
+
+  renderCalendario(lista);
+}
+
+function tramosCarro(m) {
+  const out = [];
+  srmsDe(m).forEach((s) => {
+    const fin = s.etapa === ETAPAS.length - 1 ? s.hitos[s.hitos.length - 1].fecha : null;
+    const ingreso = s.hitos.find((h) => h.etapa === 5)?.fecha;
+    const salida = s.hitos.find((h) => h.etapa === 6)?.fecha;
+    const base = { srm: s.id, sigue: !fin };
+    if (!s.fueraServicio) { out.push({ ...base, tipo: "obs", ini: s.creada, fin: fin || new Date().toISOString(), txt: `Con observaciones · SRM ${s.nroSolicitudCia}` }); return; }
+    if (ingreso) {
+      out.push({ ...base, tipo: "fs", ini: s.creada, fin: ingreso, sigue: false, txt: "Fuera de servicio" });
+      out.push({ ...base, tipo: "taller", ini: ingreso, fin: salida || fin || new Date().toISOString(), sigue: !salida && !fin, txt: `En taller${s.taller ? " · " + s.taller : ""}` });
+      if (salida) out.push({ ...base, tipo: "fs", ini: salida, fin: fin || new Date().toISOString(), txt: "Esperando entrega" });
+    } else out.push({ ...base, tipo: "fs", ini: s.creada, fin: fin || new Date().toISOString(), txt: `Fuera de servicio${s.taller ? " · " + s.taller : ""}` });
+  });
+  return out;
+}
+
+const diaISO = (d) => { const x = new Date(d); x.setHours(12, 0, 0, 0); return x; };
+
+function renderCalendario(lista) {
+  const R = fl.rango;
+  const hoy = diaISO(Date.now());
+  const inicio = new Date(hoy.getTime() - (R - 8) * DAY);
+  const fin = new Date(inicio.getTime() + (R - 1) * DAY);
+  const dias = Array.from({ length: R }, (_, i) => new Date(inicio.getTime() + i * DAY));
+  const idx = (iso) => Math.round((diaISO(iso) - inicio) / DAY);
+  const enRango = (m) => tramosCarro(m).some((t) => idx(t.fin) >= 0 && idx(t.ini) <= R - 1) ||
+    (m.documentos || []).some((d) => d.vence && idx(d.vence + "T12:00:00") >= 0 && idx(d.vence + "T12:00:00") <= R - 1);
+  const filas = fl.todas ? lista : lista.filter(enRango);
+  const vista = fl.vista || (window.matchMedia("(max-width: 767px)").matches ? "lista" : "linea");
+  const tituloT = (t) => `${t.txt} · ${fmtFecha(t.ini)} → ${t.sigue ? "sigue" : fmtFecha(t.fin)}`;
+  const cls = { fs: "tl-fs", taller: "tl-taller", obs: "tl-obs" };
+
+  const filasHTML = filas.map((m) => {
+    const barras = tramosCarro(m).filter((t) => idx(t.fin) >= 0 && idx(t.ini) <= R - 1).map((t) => {
+      const a = Math.max(0, idx(t.ini)), b = Math.min(R - 1, idx(t.fin));
+      return `<button class="tl-bar ${cls[t.tipo]} ${idx(t.ini) < 0 ? "tl-viene" : ""} ${t.sigue ? "tl-sigue" : ""}" style="grid-column:${a + 1} / ${b + 2}" title="${esc(tituloT(t))}" data-open="${esc(t.srm)}">${esc(t.txt)}${t.sigue ? " →" : ""}</button>`;
+    }).join("");
+    const docs = (m.documentos || []).filter((d) => d.vence && idx(d.vence + "T12:00:00") >= 0 && idx(d.vence + "T12:00:00") <= R - 1)
+      .map((d) => `<button class="tl-bar tl-doc" style="grid-column:${idx(d.vence + "T12:00:00") + 1}" title="${esc(d.tipo)} vence ${fmtFecha(d.vence)}" data-ficha="${esc(m.id)}" aria-label="${esc(d.tipo)} vence ${fmtFecha(d.vence)}">◆</button>`).join("");
+    return `<div class="tl-row"><button class="tl-fix" data-ficha="${esc(m.id)}">${iconoCarro(m.tipo, "l")}<span><strong>${esc(m.codigo)}</strong><span class="small muted">${esc(ciaLabel(m.compania))}</span></span></button>
+      <div class="tl-grid"><div class="tl-cols" aria-hidden="true">${dias.map((d) => `<div class="${[0, 6].includes(d.getDay()) ? "tl-we" : ""} ${+d === +hoy ? "tl-hoy" : ""}"></div>`).join("")}</div>${barras}${docs}</div></div>`;
+  }).join("");
+
+  const listaHTML = filas.map((m) => {
+    const tr = tramosCarro(m).filter((t) => idx(t.fin) >= 0 && idx(t.ini) <= R - 1);
+    return `<article><button class="tl-fix" style="position:static;border:0;padding:0;background:transparent" data-ficha="${esc(m.id)}">${iconoCarro(m.tipo, "l")}<span><strong>${esc(m.codigo)} · ${esc(ciaLabel(m.compania))}</strong></span></button>
+      ${tr.map((t) => `<button class="tl-bar ${cls[t.tipo]}" data-open="${esc(t.srm)}"><b>${esc(t.txt)}</b><br>${fmtFecha(t.ini)} → ${t.sigue ? "sigue abierta" : fmtFecha(t.fin)}</button>`).join("")}
+      ${(m.documentos || []).filter((d) => d.vence && idx(d.vence + "T12:00:00") >= 0 && idx(d.vence + "T12:00:00") <= R - 1).map((d) => `<span class="small ${clsDoc(estadoDoc(d))}">◆ ${esc(d.tipo)} vence ${fmtFecha(d.vence)}</span>`).join("")}
+    </article>`;
+  }).join("");
+
+  $("#fl-cal").setAttribute("data-vista", vista);
+  $("#fl-cal").innerHTML = `
+    <div class="tl-head">
+      <div><h2 style="margin:0">Calendario de flota</h2><p class="muted small" style="margin:2px 0 0">${fmtFecha(inicio.toISOString())} → ${fmtFecha(fin.toISOString())} · ${filas.length} carro${filas.length === 1 ? "" : "s"}${fl.todas ? "" : " con movimiento"}</p></div>
+      <div class="chips">
+        ${[[14, "2 semanas"], [30, "30 días"], [60, "60 días"]].map(([n, l]) => `<button class="chip" data-fl-rango="${n}" aria-pressed="${fl.rango === n}">${l}</button>`).join("")}
+        <button class="chip" data-fl-vista="${vista === "lista" ? "linea" : "lista"}" aria-pressed="false">${vista === "lista" ? "Ver línea de tiempo" : "Ver por carro"}</button>
+        <button class="chip" data-fl-todas aria-pressed="${fl.todas}">Toda la flota</button>
+      </div>
+    </div>
+    <div class="tl-legend">
+      <span><i class="tl-fs"></i>Fuera de servicio</span><span><i class="tl-taller"></i>En taller</span><span><i class="tl-obs"></i>Con observaciones (en servicio)</span><span><b class="c-b" style="color:var(--blue)">◆</b>Vence documento</span>
+    </div>
+    ${filas.length ? `<div class="tl-scroll" tabindex="0" role="region" aria-label="Línea de tiempo de la flota"><div class="tl" style="--dias:${R}">
+      <div class="tl-row"><div class="tl-fix small muted">Hoy · ${fmtFecha(hoy.toISOString())}</div><div class="tl-days">${dias.map((d) => `<div class="tl-day ${[0, 6].includes(d.getDay()) ? "tl-we" : ""} ${+d === +hoy ? "tl-hoy" : ""}"><span>${"DLMMJVS"[d.getDay()]}</span><b>${d.getDate()}</b></div>`).join("")}</div></div>
+      ${filasHTML}</div></div>
+      <div class="tl-list">${listaHTML}</div>` : `<p class="empty">Sin reparaciones ni vencimientos en este rango.</p>`}`;
+}
+
+function abrirFicha(id) {
+  const m = maquina(id);
+  if (!m) return;
+  const e = estadoCarro(m);
+  const hist = srmsDe(m).sort((a, b) => b.creada.localeCompare(a.creada));
+  const usadas = m.horometro && m.mantencionHoras !== undefined && m.mantencionHoras !== "" ? Number(m.horometro) - Number(m.mantencionHoras) : null;
+  const pct = usadas === null ? 0 : Math.min(100, Math.round((usadas / INTERVALO_MANT_H) * 100));
+  const progCls = usadas === null ? "" : usadas >= INTERVALO_MANT_H ? "r" : usadas >= INTERVALO_MANT_H * 0.8 ? "a" : "";
+  $("#dlg-title").textContent = `${m.codigo}${m.marca ? " · " + [m.marca, m.modelo].filter(Boolean).join(" ") : ""}`;
+  $("#dlg-sub").textContent = `Ficha del carro · ${ciaLabel(m.compania)} · Tipo ${m.tipo}${m.anio ? " · Año " + m.anio : ""}`;
+  $("#dlg-body").innerHTML = `
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">${iconoCarro(m.tipo, "f")}<div><span class="pill ${e.cls}" style="font-size:14px">${esc(e.txt)}</span>
+      <p class="small muted" style="margin:6px 0 0">${esc(NOMBRE_CAT[categoria(m.tipo)])}</p></div></div>
+
+    <h3>Ahora</h3>
+    ${e.srm ? `<dl class="kv">
+        <dt>Solicitud</dt><dd><a href="#" data-open="${esc(e.srm.id)}">SRM Nº ${esc(e.srm.nroSolicitudCia)}</a> · ${fmtFecha(e.srm.fecha)}</dd>
+        <dt>Etapa</dt><dd>${esc(ETAPAS[e.srm.etapa].nombre)} <span class="pill ${semaforo(e.srm).cls}">${semaforo(e.srm).txt}</span></dd>
+        <dt>Taller</dt><dd>${esc(e.srm.taller || "Sin asignar")}</dd>
+        <dt>${e.srm.fueraServicio ? "Fuera de servicio" : "Abierta hace"}</dt><dd>${diasDesde(e.srm.creada)} días</dd>
+        <dt>Fallas</dt><dd>${esc(fallasDe(e.srm).map((x) => x.split(": ").slice(-1)[0]).join(" · "))}</dd>
+      </dl>` : `<p class="small">Disponible, sin solicitudes abiertas.</p>`}
+
+    <h3>Números</h3>
+    <form id="form-num" class="form-grid" data-id="${esc(m.id)}">
+      <label>Km actual<input name="km" type="number" step="0.1" min="0" value="${esc(m.km || "")}" /></label>
+      <label>Horómetro (h)<input name="horometro" type="number" step="0.1" min="0" value="${esc(m.horometro || "")}" /></label>
+      <label>Última mantención (h)<input name="mantencionHoras" type="number" step="0.1" min="0" value="${esc(m.mantencionHoras ?? "")}" /></label>
+      <div class="field" style="justify-content:flex-end"><div class="row-actions"><button class="btn sm" type="submit">Guardar</button><button class="btn sec sm" type="button" data-mant="${esc(m.id)}">Registrar mantención hoy</button></div></div>
+    </form>
+    ${usadas === null ? `<p class="hint">Ingrese horómetro y última mantención para ver la próxima mantención preventiva (cada ${INTERVALO_MANT_H} h).</p>` : `
+      <div class="prog ${progCls}" style="margin-top:12px" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
+      <p class="small ${progCls === "r" ? "c-r" : "muted"}">Próxima mantención: ${(Number(m.mantencionHoras) + INTERVALO_MANT_H).toLocaleString("es-CL")} h · ${Math.max(0, Math.round(INTERVALO_MANT_H - usadas))} h restantes${usadas >= INTERVALO_MANT_H ? " · Mantención vencida" : ""}</p>`}
+    <p class="small muted">${diasFueraDeServicioMes(m)} días fuera de servicio este mes · ${hist.length} solicitud${hist.length === 1 ? "" : "es"} registradas.</p>
+
+    <h3>Documentos</h3>
+    ${(m.documentos || []).length ? m.documentos.map((d) => `<div class="doc-row"><div><div>${esc(d.tipo)}</div><div class="small ${clsDoc(estadoDoc(d))}">${d.vence ? fmtFecha(d.vence) : "Sin fecha"} · ${esc(estadoDoc(d))}</div></div>
+      <div class="row-actions"><input type="date" value="${esc(d.vence || "")}" data-doc-fecha="${esc(m.id)}|${esc(d.id)}" aria-label="Vencimiento ${esc(d.tipo)}" style="width:auto" /><button class="btn sec sm" data-renovar="${esc(m.id)}|${esc(d.id)}">Marcar renovado</button></div></div>`).join("") : `<p class="small muted">Sin documentos registrados.</p>`}
+
+    <h3>Historial</h3>
+    ${hist.length ? `<ul class="fallas">${hist.map((s) => `<li><a href="#" data-open="${esc(s.id)}">SRM Nº ${esc(s.nroSolicitudCia)}</a> · ${fmtFecha(s.fecha)} · ${s.etapa === ETAPAS.length - 1 ? `Entregada ${fmtFecha(s.hitos[s.hitos.length - 1].fecha)} (${diasDesde(s.creada, new Date(s.hitos[s.hitos.length - 1].fecha).getTime())} días)` : esc(ETAPAS[s.etapa].nombre)}${s.taller ? " · " + esc(s.taller) : ""}</li>`).join("")}</ul>` : `<p class="small muted">Sin solicitudes.</p>`}
+    ${m.mantencionHoras !== undefined && m.mantencionHoras !== "" ? `<p class="small">Mantención preventiva registrada a las ${Number(m.mantencionHoras).toLocaleString("es-CL")} h.</p>` : ""}
+
+    <div class="row-actions" style="margin-top:16px">
+      <button class="btn red" data-nueva-srm="${esc(m.id)}">Nueva SRM para ${esc(m.codigo)}</button>
+      <button class="btn sec" data-edit-maq="${esc(m.id)}">Editar datos del carro</button>
+    </div>`;
+  const dlg = $("#dlg");
+  if (!dlg.open) dlg.showModal();
+  $("#dlg-body").scrollTop = 0;
+}
+
+function sumarAnio(iso) {
+  const base = iso && new Date(iso + "T12:00:00") > new Date() ? new Date(iso + "T12:00:00") : new Date();
+  base.setFullYear(base.getFullYear() + 1);
+  return base.toISOString().slice(0, 10);
 }
 
 /* ===================== Ajustes ===================== */
@@ -1099,6 +1444,16 @@ function cargarDemo() {
       fleet.push({ id: uid(), codigo: `${t}-${cia}`, tipo: t, compania: cia, marca: "", modelo: "", anio: "", km: "" });
       cia = (cia % 22) + 1;
     }
+  });
+  // Documentos y horómetros ficticios, con algunos vencidos y por vencer.
+  let k = 0;
+  fleet.forEach((m) => {
+    m.documentos = docsBase(m.tipo).map((d) => {
+      const off = ((m.compania * 97 + (k++) * 61) % 420) - 20; // ~5% vencidos, ~7% por vencer
+      return Object.assign(d, { vence: new Date(Date.now() + off * DAY).toISOString().slice(0, 10) });
+    });
+    m.horometro = String(1800 + ((m.compania * 137 + k * 31) % 2600));
+    m.mantencionHoras = String(Number(m.horometro) - ((m.compania * 53 + k) % 290));
   });
   const b10 = fleet.find((m) => m.codigo === "B-10") || fleet[0];
   Object.assign(b10, { codigo: "B-10", compania: 10, marca: "ROSENBAUER", modelo: "COMMANDER", anio: "2015", km: "34223.8" });
@@ -1159,11 +1514,42 @@ function renderTodo() {
   renderSelectMaquinas();
   renderHistorial();
   renderFlota();
+  renderFlotaPanel();
 }
 
 document.addEventListener("click", async (ev) => {
-  const t = ev.target.closest("[data-view],[data-open],[data-avanzar],[data-retroceder],[data-mail],[data-copy],[data-print],[data-borrar],[data-edit-maq],[data-del-maq]");
+  const t = ev.target.closest("[data-view],[data-open],[data-avanzar],[data-retroceder],[data-mail],[data-copy],[data-print],[data-borrar],[data-edit-maq],[data-del-maq],[data-ficha],[data-fl-filtro],[data-fl-rango],[data-fl-vista],[data-fl-todas],[data-renovar],[data-mant],[data-nueva-srm]");
   if (!t) return;
+  const dd = t.dataset;
+  if (dd.ficha) { ev.preventDefault(); abrirFicha(dd.ficha); return; }
+  if (dd.flFiltro) { fl.filtro = dd.flFiltro; renderFlotaPanel(); return; }
+  if (dd.flRango) { fl.rango = Number(dd.flRango); renderFlotaPanel(); return; }
+  if (dd.flVista) { fl.vista = dd.flVista; renderFlotaPanel(); return; }
+  if ("flTodas" in dd) { fl.todas = !fl.todas; renderFlotaPanel(); return; }
+  if (dd.renovar) {
+    const [mid, did] = dd.renovar.split("|");
+    const doc = (maquina(mid).documentos || []).find((x) => x.id === did);
+    doc.vence = sumarAnio(doc.vence);
+    await guardar(); renderTodo(); abrirFicha(mid);
+    toast(`${doc.tipo} renovado hasta ${fmtFecha(doc.vence)}.`);
+    return;
+  }
+  if (dd.mant) {
+    const m = maquina(dd.mant);
+    if (!m.horometro) { toast("Ingrese primero el horómetro actual."); return; }
+    m.mantencionHoras = m.horometro;
+    await guardar(); renderTodo(); abrirFicha(m.id);
+    toast(`Mantención registrada a las ${Number(m.horometro).toLocaleString("es-CL")} h.`);
+    return;
+  }
+  if (dd.nuevaSrm) {
+    $("#dlg").close();
+    mostrarVista("nueva");
+    $("#srm-maquina").value = dd.nuevaSrm;
+    actualizarDatosMaquina();
+    $("#srm-maquina").scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
   if (t.dataset.view) { mostrarVista(t.dataset.view); return; }
   ev.preventDefault();
   const d = t.dataset;
@@ -1181,6 +1567,9 @@ document.addEventListener("click", async (ev) => {
     }
   } else if (d.editMaq) {
     const m = maquina(d.editMaq), f = $("#form-maq");
+    if ($("#dlg").open) $("#dlg").close();
+    mostrarVista("flota");
+    $("#flota-admin").open = true;
     f.maqId.value = m.id;
     ["codigo", "tipo", "compania", "marca", "modelo", "anio"].forEach((k) => { f[k].value = m[k] ?? ""; });
     $("#maq-submit").textContent = "Guardar cambios";
@@ -1193,6 +1582,13 @@ document.addEventListener("click", async (ev) => {
 });
 
 document.addEventListener("submit", async (ev) => {
+  if (ev.target.id === "form-num") {
+    ev.preventDefault();
+    const f = ev.target, m = maquina(f.dataset.id);
+    Object.assign(m, { km: f.km.value, horometro: f.horometro.value, mantencionHoras: f.mantencionHoras.value });
+    await guardar(); renderTodo(); abrirFicha(m.id); toast("Números guardados.");
+    return;
+  }
   if (ev.target.id !== "form-mm") return;
   ev.preventDefault();
   const f = ev.target, s = state.srms.find((x) => x.id === f.dataset.id);
@@ -1201,6 +1597,16 @@ document.addEventListener("submit", async (ev) => {
   renderTodo();
   toast("Datos guardados.");
 });
+
+document.addEventListener("change", async (ev) => {
+  const k = ev.target.dataset?.docFecha;
+  if (!k) return;
+  const [mid, did] = k.split("|");
+  const doc = (maquina(mid).documentos || []).find((x) => x.id === did);
+  doc.vence = ev.target.value;
+  await guardar(); renderTodo(); abrirFicha(mid);
+});
+["#fl-cia", "#fl-tipo"].forEach((s) => $(s).addEventListener("change", () => { fl.cia = $("#fl-cia").value; fl.tipo = $("#fl-tipo").value; renderFlotaPanel(); }));
 
 $("#srm-secciones").addEventListener("input", (ev) => {
   const k = ev.target.dataset.obs;
@@ -1276,6 +1682,8 @@ $("#wipe").addEventListener("click", async () => {
 (async function init() {
   cargarLocal();
   if (!cfg.url && !state.fleet.length && !state.srms.length && !safeGet("cbs-mmayor-visto")) cargarDemo();
+  // Demo guardada por una versión anterior (sin documentos ni horómetros): se regenera.
+  if (state.demo && !state.fleet.some((m) => m.documentos)) cargarDemo();
   safeSet("cbs-mmayor-visto", "1");
   $("#srm-fecha").value = hoyISO();
   renderFormSecciones();
