@@ -39,6 +39,7 @@
     --shadow: none;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html, body { margin: 0; }
   body {
     background: var(--bg); color: var(--ink);
@@ -364,6 +365,17 @@
   <div class="dlg-body" id="dlg-body"></div>
 </dialog>
 
+<dialog id="ask" aria-labelledby="ask-msg">
+  <form method="dialog" class="dlg-body" id="ask-form">
+    <p id="ask-msg" style="margin-top:0;white-space:pre-line"></p>
+    <label class="field" id="ask-field">Nota (opcional)<textarea id="ask-input" placeholder="Proveedor, monto, Nº de ingreso…"></textarea></label>
+    <div class="row-actions" style="margin-top:14px;justify-content:flex-end">
+      <button class="btn sec" value="no" type="submit" id="ask-no">Cancelar</button>
+      <button class="btn" value="si" type="submit" id="ask-yes">Confirmar</button>
+    </div>
+  </form>
+</dialog>
+
 <div id="print-area"></div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -466,6 +478,20 @@ function toast(msg) {
   t.classList.add("show");
   clearTimeout(toast._t);
   toast._t = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+// Confirmación dentro de la página (los visores embebidos bloquean prompt/confirm).
+function preguntar(msg, { nota = false, ok = "Confirmar" } = {}) {
+  return new Promise((resolve) => {
+    const dlg = $("#ask");
+    $("#ask-msg").textContent = msg;
+    $("#ask-field").hidden = !nota;
+    $("#ask-input").value = "";
+    $("#ask-yes").textContent = ok;
+    dlg.returnValue = "";
+    dlg.addEventListener("close", () => resolve(dlg.returnValue === "si" ? (nota ? $("#ask-input").value.trim() : true) : null), { once: true });
+    dlg.showModal();
+  });
 }
 
 function safeGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
@@ -857,7 +883,7 @@ async function avanzar(id) {
   const s = state.srms.find((x) => x.id === id);
   if (!s || s.etapa >= ETAPAS.length - 1) return;
   const sig = s.etapa + 1;
-  const nota = prompt(`Marcar "${ETAPAS[sig].nombre}" para ${s.codigo}.\nNota opcional (proveedor, monto, Nº de ingreso…):`, "");
+  const nota = await preguntar(`Marcar "${ETAPAS[sig].nombre}" para ${s.codigo}.`, { nota: true, ok: "Marcar hito" });
   if (nota === null) return;
   s.etapa = sig;
   s.hitos.push({ etapa: sig, fecha: new Date().toISOString(), nota: nota.trim() });
@@ -870,7 +896,7 @@ async function avanzar(id) {
 async function retroceder(id) {
   const s = state.srms.find((x) => x.id === id);
   if (!s || s.etapa === 0) return;
-  if (!confirm(`¿Deshacer el hito "${ETAPAS[s.etapa].nombre}" de ${s.codigo}?`)) return;
+  if (!(await preguntar(`¿Deshacer el hito "${ETAPAS[s.etapa].nombre}" de ${s.codigo}?`, { ok: "Deshacer" }))) return;
   const idx = s.hitos.map((h) => h.etapa).lastIndexOf(s.etapa);
   if (idx >= 0) s.hitos.splice(idx, 1);
   s.etapa -= 1;
@@ -906,7 +932,15 @@ function enviarCorreo(id) {
 async function copiarTexto(id) {
   const s = state.srms.find((x) => x.id === id);
   try { await navigator.clipboard.writeText(textoCorreo(s)); toast("Texto copiado."); }
-  catch { prompt("Copie el texto:", textoCorreo(s)); }
+  catch { mostrarTexto(textoCorreo(s)); }
+}
+
+function mostrarTexto(txt) {
+  $("#dlg-body").insertAdjacentHTML("beforeend", `<h3>Texto para copiar</h3><textarea id="copy-area" readonly style="min-height:220px">${esc(txt)}</textarea>`);
+  const ta = $("#copy-area");
+  ta.focus();
+  ta.select();
+  toast("Seleccione y copie el texto.");
 }
 
 function imprimir(id) {
@@ -1127,7 +1161,7 @@ function renderTodo() {
   renderFlota();
 }
 
-document.addEventListener("click", (ev) => {
+document.addEventListener("click", async (ev) => {
   const t = ev.target.closest("[data-view],[data-open],[data-avanzar],[data-retroceder],[data-mail],[data-copy],[data-print],[data-borrar],[data-edit-maq],[data-del-maq]");
   if (!t) return;
   if (t.dataset.view) { mostrarVista(t.dataset.view); return; }
@@ -1141,7 +1175,7 @@ document.addEventListener("click", (ev) => {
   else if (d.print) imprimir(d.print);
   else if (d.borrar) {
     const s = state.srms.find((x) => x.id === d.borrar);
-    if (s && confirm(`¿Eliminar definitivamente la solicitud ${s.nroSolicitudCia} de ${s.codigo}?`)) {
+    if (s && await preguntar(`¿Eliminar definitivamente la solicitud ${s.nroSolicitudCia} de ${s.codigo}?`, { ok: "Eliminar" })) {
       state.srms = state.srms.filter((x) => x.id !== d.borrar);
       guardar(); $("#dlg").close(); renderTodo();
     }
@@ -1154,7 +1188,7 @@ document.addEventListener("click", (ev) => {
   } else if (d.delMaq) {
     const m = maquina(d.delMaq);
     if (state.srms.some((s) => s.maquinaId === m.id && s.etapa < ETAPAS.length - 1)) { toast(`${m.codigo} tiene solicitudes abiertas.`); return; }
-    if (confirm(`¿Quitar ${m.codigo} de la flota?`)) { state.fleet = state.fleet.filter((x) => x.id !== m.id); guardar(); renderTodo(); }
+    if (await preguntar(`¿Quitar ${m.codigo} de la flota?`, { ok: "Quitar" })) { state.fleet = state.fleet.filter((x) => x.id !== m.id); guardar(); renderTodo(); }
   }
 });
 
@@ -1213,7 +1247,7 @@ $("#bk-import").addEventListener("change", async (ev) => {
   try {
     const data = JSON.parse(await file.text());
     if (!Array.isArray(data.fleet) || !Array.isArray(data.srms)) throw new Error("formato inválido");
-    if (!confirm("Esto reemplaza todos los datos actuales. ¿Continuar?")) return;
+    if (!(await preguntar("Esto reemplaza todos los datos actuales. ¿Continuar?", { ok: "Restaurar" }))) return;
     state = Object.assign(estadoVacio(), data, { version: state.version });
     await guardar();
     renderTodo();
@@ -1222,14 +1256,14 @@ $("#bk-import").addEventListener("change", async (ev) => {
   ev.target.value = "";
 });
 $("#demo-load").addEventListener("click", async () => {
-  if ((state.fleet.length || state.srms.length) && !confirm("Esto reemplaza los datos actuales por datos de demostración. ¿Continuar?")) return;
+  if ((state.fleet.length || state.srms.length) && !(await preguntar("Esto reemplaza los datos actuales por datos de demostración. ¿Continuar?", { ok: "Cargar demo" }))) return;
   cargarDemo();
   await guardar();
   renderTodo();
   mostrarVista("panel");
 });
 $("#wipe").addEventListener("click", async () => {
-  if (!confirm("¿Borrar toda la flota y todas las solicitudes?")) return;
+  if (!(await preguntar("¿Borrar toda la flota y todas las solicitudes?", { ok: "Borrar todo" }))) return;
   const v = state.version;
   state = estadoVacio();
   state.version = v;
@@ -1241,6 +1275,8 @@ $("#wipe").addEventListener("click", async () => {
 
 (async function init() {
   cargarLocal();
+  if (!cfg.url && !state.fleet.length && !state.srms.length && !safeGet("cbs-mmayor-visto")) cargarDemo();
+  safeSet("cbs-mmayor-visto", "1");
   $("#srm-fecha").value = hoyISO();
   renderFormSecciones();
   renderAjustes();
