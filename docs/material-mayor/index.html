@@ -1,0 +1,1258 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Control de Material Mayor</title>
+<meta name="description" content="CBS — Seguimiento de solicitudes de reparación y mantenimiento (SRM) de material mayor, con hitos, semáforo de tiempos y disponibilidad de flota." />
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --ink: #1f2328;
+    --muted: #5f6b7a;
+    --line: #dde1e6;
+    --red: #e8432f;
+    --red-dark: #b8321f;
+    --green: #1f6b3a;
+    --green-soft: #e3f2e8;
+    --amber: #b7791f;
+    --amber-soft: #fdf1d8;
+    --crit: #c0362c;
+    --crit-soft: #fbe3e1;
+    --blue: #2457a6;
+    --dot-off: #cfd5dc;
+    --shadow: 0 1px 2px rgba(0,0,0,.06), 0 2px 8px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14171b; --panel: #1d2127; --ink: #e6e8eb; --muted: #9aa4b1; --line: #313740;
+      --green: #5cc287; --green-soft: #1d3326; --amber: #e3b25a; --amber-soft: #3a2f19;
+      --crit: #f07a70; --crit-soft: #3d2120; --blue: #7aa7ec; --dot-off: #3d444e;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14171b; --panel: #1d2127; --ink: #e6e8eb; --muted: #9aa4b1; --line: #313740;
+    --green: #5cc287; --green-soft: #1d3326; --amber: #e3b25a; --amber-soft: #3a2f19;
+    --crit: #f07a70; --crit-soft: #3d2120; --blue: #7aa7ec; --dot-off: #3d444e;
+    --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  header.top {
+    background: var(--red); color: #fff;
+    padding: 14px 16px 0;
+  }
+  .top-inner { max-width: 1200px; margin: 0 auto; }
+  .brand { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .brand svg { flex: none; }
+  .brand h1 { font-size: 19px; margin: 0; letter-spacing: .2px; }
+  .brand p { margin: 0; font-size: 13px; opacity: .9; }
+  .brand .spacer { flex: 1; }
+  .sync { font-size: 12px; background: rgba(255,255,255,.18); padding: 3px 8px; border-radius: 99px; white-space: nowrap; }
+  nav.tabs { display: flex; gap: 2px; margin-top: 12px; overflow-x: auto; scrollbar-width: none; }
+  nav.tabs button {
+    background: transparent; color: #fff; border: 0; padding: 10px 14px; font: inherit; font-weight: 600;
+    border-radius: 8px 8px 0 0; cursor: pointer; opacity: .85; white-space: nowrap;
+  }
+  nav.tabs button[aria-selected="true"] { background: var(--bg); color: var(--red-dark); opacity: 1; }
+  :root[data-theme="dark"] nav.tabs button[aria-selected="true"] { color: #ff8d7d; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) nav.tabs button[aria-selected="true"] { color: #ff8d7d; } }
+  main { max-width: 1200px; margin: 0 auto; padding: 18px 16px 60px; }
+  section.view { display: none; }
+  section.view.active { display: block; }
+  h2 { font-size: 18px; margin: 0 0 12px; color: var(--green); }
+  h3 { font-size: 15px; margin: 18px 0 8px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; box-shadow: var(--shadow); }
+  .card + .card { margin-top: 16px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 12.5px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--blue); border-radius: 10px; padding: 12px 14px; box-shadow: var(--shadow); }
+  .kpi b { display: block; font-size: 26px; color: var(--blue); line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .kpi span { font-size: 13px; color: var(--muted); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); font-weight: 700; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .table-wrap { overflow-x: auto; }
+  .bar { position: relative; height: 18px; background: var(--line); border-radius: 4px; min-width: 90px; overflow: hidden; }
+  .bar i { position: absolute; inset: 0 auto 0 0; background: var(--blue); opacity: .75; }
+  .bar em { position: relative; font-style: normal; font-size: 12px; font-weight: 700; padding-left: 6px; line-height: 18px; }
+  .filters { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filters label { display: flex; flex-direction: column; font-size: 12.5px; color: var(--muted); gap: 3px; min-width: 180px; flex: 1; }
+  input, select, textarea {
+    font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line);
+    border-radius: 7px; padding: 8px 10px; width: 100%;
+  }
+  input[type="checkbox"] { width: 18px; height: 18px; padding: 0; accent-color: var(--red); }
+  textarea { min-height: 64px; resize: vertical; }
+  button.btn {
+    font: inherit; font-weight: 600; border: 0; border-radius: 7px; padding: 9px 14px; cursor: pointer;
+    background: var(--green); color: #fff;
+  }
+  :root[data-theme="dark"] button.btn { color: #0f1a13; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button.btn { color: #0f1a13; } }
+  button.btn.sec { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button.btn.red { background: var(--red); color: #fff; }
+  button.btn.sm { padding: 6px 10px; font-size: 12.5px; }
+  button.btn:disabled { opacity: .5; cursor: default; }
+  .row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .dots { display: inline-flex; gap: 4px; }
+  .dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--dot-off); display: inline-block; }
+  .dots i.on { background: var(--green); }
+  .pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 99px; white-space: nowrap; }
+  .pill.g { background: var(--green-soft); color: var(--green); }
+  .pill.a { background: var(--amber-soft); color: var(--amber); }
+  .pill.r { background: var(--crit-soft); color: var(--crit); }
+  .pill.n { background: var(--line); color: var(--muted); }
+  .tag-fs { font-size: 11px; font-weight: 700; color: var(--crit); }
+  a { color: var(--blue); }
+  .m-code { font-weight: 700; text-decoration: none; }
+  .m-sub { font-size: 12px; color: var(--muted); }
+  .empty { padding: 26px; text-align: center; color: var(--muted); }
+  /* Formulario SRM */
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .form-grid label, .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  .sec-block { border: 1px solid var(--line); border-radius: 8px; margin-top: 10px; overflow: hidden; }
+  .sec-block > h4 { margin: 0; padding: 8px 12px; background: var(--bg); font-size: 13px; letter-spacing: .3px; display: flex; justify-content: space-between; gap: 8px; }
+  .sec-item { display: grid; grid-template-columns: 26px minmax(160px, 38%) 1fr; gap: 8px; align-items: center; padding: 7px 12px; border-top: 1px solid var(--line); }
+  .sec-item .lbl { font-size: 13px; }
+  @media (max-width: 640px) {
+    .sec-item { grid-template-columns: 26px 1fr; }
+    .sec-item input[type="text"] { grid-column: 1 / -1; }
+  }
+  .hint { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+  .notice { background: var(--amber-soft); color: var(--ink); border-left: 4px solid var(--amber); padding: 10px 12px; border-radius: 6px; font-size: 13.5px; }
+  /* Detalle */
+  dialog { border: 0; border-radius: 12px; padding: 0; width: min(760px, calc(100vw - 24px)); max-height: calc(100vh - 40px); background: var(--panel); color: var(--ink); }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  .dlg-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; padding: 16px 18px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); }
+  .dlg-head h3 { margin: 0; }
+  .dlg-body { padding: 16px 18px; }
+  .timeline { list-style: none; margin: 0; padding: 0; }
+  .timeline li { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; padding: 6px 0; align-items: start; }
+  .timeline .tdot { width: 14px; height: 14px; border-radius: 50%; margin-top: 3px; background: var(--dot-off); }
+  .timeline li.done .tdot { background: var(--green); }
+  .timeline li.cur .tdot { background: var(--amber); box-shadow: 0 0 0 3px var(--amber-soft); }
+  .kv { display: grid; grid-template-columns: 170px 1fr; gap: 4px 12px; font-size: 13.5px; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; }
+  ul.fallas { margin: 6px 0 0; padding-left: 18px; }
+  ul.fallas li { margin: 2px 0; }
+  .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; max-width: calc(100vw - 32px); }
+  .toast.show { opacity: 1; }
+  #print-area { display: none; }
+  @media print {
+    body { background: #fff; color: #000; font-size: 11px; }
+    header.top, main, dialog, .toast { display: none !important; }
+    #print-area { display: block; }
+    #print-area table { border: 1px solid #000; }
+    #print-area th, #print-area td { border: 1px solid #000; padding: 3px 5px; color: #000; }
+    #print-area h1 { font-size: 14px; margin: 0; }
+    @page { size: letter; margin: 12mm; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M12 2.5l2.6 6.1 6.6.5-5 4.3 1.6 6.5L12 16.4l-5.8 3.5 1.6-6.5-5-4.3 6.6-.5z"/></svg>
+      <div>
+        <h1>Control de Material Mayor</h1>
+        <p>Cuerpo de Bomberos de Santiago · Solicitudes de reparación y mantenimiento</p>
+      </div>
+      <div class="spacer"></div>
+      <span class="sync" id="sync-state">Datos locales</span>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-view="panel" aria-selected="true">Panel</button>
+      <button role="tab" data-view="activas" aria-selected="false">Máquinas en reparación</button>
+      <button role="tab" data-view="nueva" aria-selected="false">Nueva SRM</button>
+      <button role="tab" data-view="historial" aria-selected="false">Historial</button>
+      <button role="tab" data-view="flota" aria-selected="false">Flota</button>
+      <button role="tab" data-view="ajustes" aria-selected="false">Ajustes</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- PANEL -->
+  <section class="view active" id="view-panel">
+    <div id="demo-banner"></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div class="card">
+        <h2>Material mayor fuera de servicio por tipo</h2>
+        <div class="table-wrap"><table id="tbl-disp"></table></div>
+      </div>
+      <div class="card">
+        <h2>Reparaciones activas por etapa</h2>
+        <div class="table-wrap"><table id="tbl-etapas"></table></div>
+        <h3>Atrasadas (semáforo rojo)</h3>
+        <div id="atrasadas"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACTIVAS -->
+  <section class="view" id="view-activas">
+    <div class="card">
+      <h2>Máquinas en movimiento (activas)</h2>
+      <div class="filters">
+        <label>Filtrar por compañía <select id="f-cia"></select></label>
+        <label>Filtrar por taller <select id="f-taller"></select></label>
+        <label>Estado de servicio
+          <select id="f-fs">
+            <option value="">Todas</option>
+            <option value="1">Solo fuera de servicio</option>
+            <option value="0">Solo en servicio</option>
+          </select>
+        </label>
+      </div>
+      <div class="table-wrap"><table id="tbl-activas"></table></div>
+    </div>
+  </section>
+
+  <!-- NUEVA SRM -->
+  <section class="view" id="view-nueva">
+    <form class="card" id="form-srm" autocomplete="off">
+      <h2>Solicitud de reparación o de mantenimiento</h2>
+      <p class="muted small" style="margin-top:-6px">Formulario equivalente a la planilla SRM del Departamento de Material Mayor. Una solicitud por máquina, con todos los detalles detectados.</p>
+      <div class="form-grid">
+        <label>Vehículo *<select name="maquinaId" id="srm-maquina" required></select></label>
+        <label>Compañía<input name="compania" id="srm-cia" readonly /></label>
+        <label>Nº solicitud de la compañía<input name="nroSolicitudCia" id="srm-nro" readonly /></label>
+        <label>Marca<input id="srm-marca" readonly /></label>
+        <label>Modelo<input id="srm-modelo" readonly /></label>
+        <label>Año<input id="srm-anio" readonly /></label>
+        <label>Solicita (maquinista) *<input name="solicita" required placeholder="Maquinista Sr. …" /></label>
+        <label>VºBº Capitán *<input name="capitan" required placeholder="Capitán Sr. …" /></label>
+        <label>Fecha *<input type="date" name="fecha" id="srm-fecha" required /></label>
+        <label>Km actual<input type="number" name="km" step="0.1" min="0" inputmode="decimal" /></label>
+        <label>Horómetro<input type="number" name="horometro" step="0.1" min="0" inputmode="decimal" /></label>
+        <label>Prioridad
+          <select name="prioridad">
+            <option value="normal">Normal</option>
+            <option value="alta">Alta</option>
+            <option value="critica">Crítica</option>
+          </select>
+        </label>
+      </div>
+      <div id="srm-aviso"></div>
+      <label class="field" style="flex-direction:row;align-items:center;gap:10px;margin-top:14px;color:var(--ink)">
+        <input type="checkbox" name="fueraServicio" /> La máquina queda <b>fuera de servicio</b> por estas fallas
+      </label>
+
+      <h3>Revisar lo siguiente</h3>
+      <p class="hint">Marque cada punto con falla e indique la observación. Si escribe una observación, el punto se marca solo.</p>
+      <div id="srm-secciones"></div>
+
+      <div class="sec-block">
+        <h4><span>OTROS (especificar)</span> <button type="button" class="btn sec sm" id="add-otro">+ Agregar línea</button></h4>
+        <div id="srm-otros"></div>
+      </div>
+
+      <h3>Información adicional complementaria</h3>
+      <textarea name="infoAdicional" placeholder="Alcances de la falla o avería, indicaciones especiales para la mantención…"></textarea>
+
+      <div class="row-actions" style="margin-top:16px">
+        <button class="btn red" type="submit">Registrar solicitud</button>
+        <button class="btn sec" type="reset">Limpiar</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- HISTORIAL -->
+  <section class="view" id="view-historial">
+    <div class="card">
+      <h2>Historial de solicitudes</h2>
+      <div class="filters">
+        <label>Buscar<input id="h-q" placeholder="Máquina, falla, taller, Nº…" /></label>
+        <label>Compañía <select id="h-cia"></select></label>
+        <label>Estado
+          <select id="h-estado">
+            <option value="">Todas</option>
+            <option value="abierta">Abiertas</option>
+            <option value="cerrada">Entregadas</option>
+          </select>
+        </label>
+      </div>
+      <div class="row-actions" style="margin-bottom:10px"><button class="btn sec sm" id="export-csv">Exportar a Excel (CSV)</button></div>
+      <div class="table-wrap"><table id="tbl-hist"></table></div>
+    </div>
+  </section>
+
+  <!-- FLOTA -->
+  <section class="view" id="view-flota">
+    <div class="card">
+      <h2>Flota de material mayor</h2>
+      <form id="form-maq" class="form-grid" autocomplete="off">
+        <input type="hidden" name="maqId" />
+        <label>Código *<input name="codigo" required placeholder="B-10" /></label>
+        <label>Tipo *<select name="tipo" required></select></label>
+        <label>Compañía *<input name="compania" type="number" min="0" max="99" required placeholder="10 (0 = Comandancia)" /></label>
+        <label>Marca<input name="marca" /></label>
+        <label>Modelo<input name="modelo" /></label>
+        <label>Año<input name="anio" type="number" min="1950" max="2100" /></label>
+        <div class="field" style="justify-content:flex-end">
+          <div class="row-actions"><button class="btn" type="submit" id="maq-submit">Agregar máquina</button><button class="btn sec" type="reset">Cancelar</button></div>
+        </div>
+      </form>
+      <h3>Cargar flota completa desde Excel</h3>
+      <p class="hint">Pegue filas copiadas desde Excel con las columnas: <b>Código · Tipo · Compañía · Marca · Modelo · Año</b>. Las máquinas con un código ya existente se actualizan.</p>
+      <textarea id="flota-paste" placeholder="B-10	B	10	ROSENBAUER	COMMANDER	2015"></textarea>
+      <div class="row-actions" style="margin-top:8px"><button class="btn sec" id="flota-import">Importar filas</button></div>
+      <h3>Máquinas registradas <span class="muted small" id="flota-count"></span></h3>
+      <div class="table-wrap"><table id="tbl-flota"></table></div>
+    </div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section class="view" id="view-ajustes">
+    <div class="card">
+      <h2>Base de datos compartida (Google Sheets)</h2>
+      <p class="small">Sin configurar, los datos quedan solo en este navegador. Para que todas las compañías y Material Mayor vean lo mismo, publique el script de <code>apps-script/Code.gs</code> como aplicación web y pegue aquí su URL y clave.</p>
+      <div class="form-grid">
+        <label>URL de la aplicación web<input id="cfg-url" placeholder="https://script.google.com/macros/s/…/exec" /></label>
+        <label>Clave de acceso<input id="cfg-key" type="password" /></label>
+      </div>
+      <div class="row-actions" style="margin-top:10px">
+        <button class="btn" id="cfg-save">Guardar y conectar</button>
+        <button class="btn sec" id="cfg-clear">Desconectar</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Correo de envío</h2>
+      <div class="form-grid">
+        <label>Para<input id="cfg-to" /></label>
+        <label>Con copia<input id="cfg-cc" /></label>
+      </div>
+      <div class="row-actions" style="margin-top:10px"><button class="btn" id="cfg-mail-save">Guardar</button></div>
+    </div>
+    <div class="card">
+      <h2>Plazos del semáforo (días por etapa)</h2>
+      <p class="small muted">Verde hasta el plazo, amarillo hasta el doble, rojo sobre el doble.</p>
+      <div class="form-grid" id="cfg-sla"></div>
+      <div class="row-actions" style="margin-top:10px"><button class="btn" id="cfg-sla-save">Guardar plazos</button></div>
+    </div>
+    <div class="card">
+      <h2>Respaldo</h2>
+      <div class="row-actions">
+        <button class="btn sec" id="bk-export">Descargar respaldo (JSON)</button>
+        <label class="btn sec" style="display:inline-block">Restaurar respaldo<input type="file" id="bk-import" accept="application/json" hidden /></label>
+        <button class="btn sec" id="demo-load">Cargar datos de demostración</button>
+        <button class="btn sec" id="wipe">Borrar todo</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<dialog id="dlg">
+  <div class="dlg-head">
+    <div><h3 id="dlg-title"></h3><div class="muted small" id="dlg-sub"></div></div>
+    <button class="btn sec sm" id="dlg-close" aria-label="Cerrar">Cerrar</button>
+  </div>
+  <div class="dlg-body" id="dlg-body"></div>
+</dialog>
+
+<div id="print-area"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+
+/* ===================== Catálogos ===================== */
+
+// Etapas (8 hitos) — desde que Material Mayor recibe la SRM hasta que la máquina vuelve a la compañía.
+const ETAPAS = [
+  { nombre: "SRM recibida por Material Mayor", accion: "Revisión / diagnóstico" },
+  { nombre: "Revisión y diagnóstico",           accion: "Cotización solicitada" },
+  { nombre: "Cotización solicitada al taller",  accion: "Presupuesto recibido" },
+  { nombre: "Presupuesto recibido",             accion: "Presupuesto aprobado" },
+  { nombre: "Presupuesto aprobado",             accion: "Ingreso a taller" },
+  { nombre: "En taller (reparación)",           accion: "Reparación terminada" },
+  { nombre: "Reparación terminada",             accion: "Entregada a compañía" },
+  { nombre: "Entregada a la compañía",          accion: null },
+];
+const SLA_DEFAULT = [2, 3, 5, 5, 3, 15, 2, 0];
+
+// Tipos según cuadro de disponibilidad del Cuarto Comandante (Junta de Capitanes, agosto 2026).
+const TIPOS = ["B", "BX", "BM", "Q", "RX", "RH", "M", "MX", "BT", "H", "RM", "UD", "Z"];
+
+// Secciones de la planilla SRM (Departamento de Material Mayor).
+const SECCIONES = [
+  ["LUCES Y SISTEMA ELÉCTRICO", [
+    "Luces: altas, bajas, virajes, frenos, patente, trocha",
+    "Cables, batería, alternador, bocina, alarma retroceso, conexiones",
+    "Otros"]],
+  ["DIRECCIÓN", [
+    "Barras, extremos, caja dirección, acoples, seguro de tuercas",
+    "Sistema hidráulico, manguera, ángulo de giro, volante, convergencia",
+    "Otros"]],
+  ["FRENOS", [
+    "Retención pedal, mangueras, flexibles, presencia de fugas, tambores",
+    "Freno de estacionamiento: accionamiento y palanca",
+    "Otros"]],
+  ["SUSPENSIÓN", [
+    "Ballestas y/o paquetes de resortes, seguros, soportes",
+    "Fijaciones de amortiguadores",
+    "Otros"]],
+  ["NEUMÁTICOS", [
+    "Detalles, cortes, grietas",
+    "Llantas deformadas, grietas, falta pernos de sujeción",
+    "Otros"]],
+  ["CHASSIS", [
+    "Grietas, remaches sueltos, travesaños",
+    "Soldaduras, reforzamiento en mal estado",
+    "Otros"]],
+  ["CABINA Y CARROCERÍA", [
+    "General",
+    "Parabrisas, vidrios, puertas, ventanas, pintura, capot",
+    "Cierre de capot, espejo retrovisor interior, espejos",
+    "Otros"]],
+  ["MOTOR", [
+    "Filtros, cañerías, bombas, fugas",
+    "Motor de partida, sistema eléctrico",
+    "Embrague",
+    "Otros"]],
+  ["CUERPO BOMBA", [
+    "Bomba centrífuga (alta)",
+    "Bomba centrífuga (baja)",
+    "Sello mecánico, cardán, retenes",
+    "Manómetros, llaves de paso, tablero",
+    "Bomba de cebado",
+    "Otros"]],
+  ["ACCESORIOS E INSTRUMENTOS", [
+    "Velocímetro, tacómetro, manómetro, marcadores de temperatura",
+    "Otros"]],
+  ["SISTEMAS DE ALARMAS", [
+    "Barras, balizas, luces, estroboscópicos, LED",
+    "Sirenas, sistema doble sonido"]],
+  ["MANTENCIÓN", [
+    "Cambio de lubricantes, filtros, depuradores",
+    "Otros"]],
+  ["TORRE DE ILUMINACIÓN", [
+    "Generador y torre de iluminación",
+    "Generador eléctrico, tablero eléctrico",
+    "Otros"]],
+];
+
+const TALLERES_SUGERIDOS = ["CML (taller institucional)"];
+
+/* ===================== Utilidades ===================== */
+
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const DAY = 86400000;
+const hoyISO = () => new Date().toISOString().slice(0, 10);
+const fmtFecha = (iso) => iso ? new Date(iso.length === 10 ? iso + "T12:00:00" : iso).toLocaleDateString("es-CL") : "";
+const diasDesde = (iso, hasta = Date.now()) => Math.max(0, Math.floor((hasta - new Date(iso).getTime()) / DAY));
+const ciaLabel = (n) => Number(n) === 0 ? "Comandancia" : `${n}ª Cía.`;
+
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+function safeGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function safeSet(k, v) { try { localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } }
+
+/* ===================== Estado y almacenamiento ===================== */
+
+const STORE_KEY = "cbs-mmayor-v1";
+const CFG_KEY = "cbs-mmayor-cfg";
+
+function estadoVacio() {
+  return { version: 0, demo: false, fleet: [], srms: [], correlativos: {}, sla: SLA_DEFAULT.slice() };
+}
+
+let state = estadoVacio();
+let cfg = { url: "", key: "", to: "material.mayor@cbs.cl", cc: "comandante.4@cbs.cl" };
+
+function cargarLocal() {
+  const raw = safeGet(STORE_KEY);
+  if (raw) {
+    try { state = Object.assign(estadoVacio(), JSON.parse(raw)); } catch { state = estadoVacio(); }
+  }
+  const c = safeGet(CFG_KEY);
+  if (c) { try { cfg = Object.assign(cfg, JSON.parse(c)); } catch { /* ignorar */ } }
+}
+
+// Backend opcional: Google Apps Script (ver apps-script/Code.gs).
+// Se usa Content-Type text/plain para evitar el preflight CORS que Apps Script no responde.
+async function remoto(payload) {
+  const res = await fetch(cfg.url, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(Object.assign({ key: cfg.key }, payload)),
+  });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+function setSync(txt) { $("#sync-state").textContent = txt; }
+
+async function sincronizarDesdeRemoto() {
+  if (!cfg.url) { setSync("Datos locales"); return; }
+  setSync("Conectando…");
+  try {
+    const data = await remoto({ action: "get" });
+    if (data.state) {
+      state = Object.assign(estadoVacio(), data.state, { version: data.version });
+      safeSet(STORE_KEY, JSON.stringify(state));
+    }
+    setSync("Conectado · Google Sheets");
+  } catch (e) {
+    setSync("Sin conexión · datos locales");
+    toast("No se pudo conectar a la base compartida: " + e.message);
+  }
+}
+
+let guardando = Promise.resolve();
+function guardar() {
+  safeSet(STORE_KEY, JSON.stringify(state));
+  if (!cfg.url) return Promise.resolve(true);
+  guardando = guardando.then(async () => {
+    setSync("Guardando…");
+    try {
+      const data = await remoto({ action: "save", baseVersion: state.version, state });
+      if (data.conflict) {
+        state = Object.assign(estadoVacio(), data.state, { version: data.version });
+        safeSet(STORE_KEY, JSON.stringify(state));
+        renderTodo();
+        toast("Otra persona modificó los datos. Se recargó la última versión: repita su último cambio.");
+        setSync("Conectado · Google Sheets");
+        return false;
+      }
+      state.version = data.version;
+      safeSet(STORE_KEY, JSON.stringify(state));
+      setSync("Conectado · Google Sheets");
+      return true;
+    } catch (e) {
+      setSync("Error al guardar · reintente");
+      toast("No se guardó en la base compartida: " + e.message);
+      return false;
+    }
+  });
+  return guardando;
+}
+
+/* ===================== Dominio ===================== */
+
+const maquina = (id) => state.fleet.find((m) => m.id === id);
+const abiertas = () => state.srms.filter((s) => s.etapa < ETAPAS.length - 1);
+const sla = (i) => Number(state.sla?.[i] ?? SLA_DEFAULT[i]);
+
+function inicioEtapa(s) {
+  const h = s.hitos.filter((x) => x.etapa === s.etapa).pop();
+  return h ? h.fecha : s.creada;
+}
+
+function semaforo(s) {
+  if (s.etapa >= ETAPAS.length - 1) return { cls: "n", dias: 0, txt: "Cerrada" };
+  const dias = diasDesde(inicioEtapa(s));
+  const lim = sla(s.etapa);
+  const cls = dias <= lim ? "g" : dias <= lim * 2 ? "a" : "r";
+  return { cls, dias, txt: `${dias} día${dias === 1 ? "" : "s"}` };
+}
+
+function siguienteCorrelativo(cia, anio) {
+  const k = `${cia}-${anio}`;
+  return (state.correlativos[k] || 0) + 1;
+}
+
+function fallasDe(s) {
+  const out = s.items.map((i) => `${i.seccion} › ${i.item}: ${i.obs || "(sin detalle)"}`);
+  s.otros.forEach((o) => out.push(`OTROS: ${o}`));
+  return out;
+}
+
+function primeraFalla(s) {
+  if (s.items.length) return s.items[0].obs || s.items[0].item;
+  return s.otros[0] || "";
+}
+
+function fueraDeServicioPorMaquina() {
+  const set = new Set();
+  abiertas().forEach((s) => { if (s.fueraServicio) set.add(s.maquinaId); });
+  return set;
+}
+
+/* ===================== Render: navegación ===================== */
+
+function mostrarVista(v) {
+  $$("nav.tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.view === v)));
+  $$("section.view").forEach((s) => s.classList.toggle("active", s.id === "view-" + v));
+  safeSet("cbs-mmayor-tab", v);
+}
+
+/* ===================== Render: panel ===================== */
+
+function renderPanel() {
+  const fs = fueraDeServicioPorMaquina();
+  const total = state.fleet.length;
+  const fuera = state.fleet.filter((m) => fs.has(m.id)).length;
+  const disp = total ? Math.round(((total - fuera) / total) * 100) : 0;
+  const act = abiertas();
+
+  const cerradas = state.srms.filter((s) => s.etapa === ETAPAS.length - 1 && s.fueraServicio);
+  const mttr = cerradas.length
+    ? (cerradas.reduce((a, s) => a + (new Date(s.hitos[s.hitos.length - 1].fecha) - new Date(s.creada)) / DAY, 0) / cerradas.length)
+    : null;
+  const conTaller = state.srms.filter((s) => s.taller);
+  const ext = conTaller.filter((s) => !/^CML/i.test(s.taller)).length;
+  const pctExt = conTaller.length ? Math.round((ext / conTaller.length) * 100) : null;
+  const rojas = act.filter((s) => semaforo(s).cls === "r");
+
+  $("#demo-banner").innerHTML = state.demo
+    ? `<div class="notice" style="margin-bottom:14px">Está viendo <b>datos de demostración</b> (flota y reparaciones ficticias). Cargue la flota real en la pestaña <b>Flota</b> y use <b>Ajustes › Borrar todo</b> para empezar en limpio.</div>`
+    : (!total ? `<div class="notice" style="margin-bottom:14px">Aún no hay máquinas registradas. Cárguelas en la pestaña <b>Flota</b> (puede pegarlas desde Excel) o pruebe con <b>Ajustes › Cargar datos de demostración</b>.</div>` : "");
+
+  $("#kpis").innerHTML = [
+    [`${disp}%`, "Disponibilidad de la flota"],
+    [`${fuera} / ${total}`, "Máquinas fuera de servicio"],
+    [act.length, "Solicitudes abiertas"],
+    [rojas.length, "Etapas atrasadas"],
+    [mttr === null ? "—" : `${mttr.toFixed(1)} d`, "Tiempo medio para reparar (MTTR)"],
+    [pctExt === null ? "—" : `${pctExt}%`, "Reparaciones en talleres externos"],
+  ].map(([v, l]) => `<div class="kpi"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join("");
+
+  // Disponibilidad por tipo
+  const filas = TIPOS.map((t) => {
+    const del = state.fleet.filter((m) => m.tipo === t);
+    const f = del.filter((m) => fs.has(m.id)).length;
+    return { t, f, n: del.length };
+  }).filter((r) => r.n > 0);
+  const otros = state.fleet.filter((m) => !TIPOS.includes(m.tipo));
+  if (otros.length) filas.push({ t: "Otros", f: otros.filter((m) => fs.has(m.id)).length, n: otros.length });
+  const barra = (p) => `<div class="bar"><i style="width:${p}%"></i><em>${p}%</em></div>`;
+  $("#tbl-disp").innerHTML = filas.length
+    ? `<thead><tr><th>Material</th><th class="num">Fuera de servicio</th><th class="num">Total</th><th>Disponibilidad</th></tr></thead><tbody>` +
+      filas.map((r) => `<tr><td><b>${esc(r.t)}</b></td><td class="num">${r.f}</td><td class="num">${r.n}</td><td>${barra(Math.round(((r.n - r.f) / r.n) * 100))}</td></tr>`).join("") +
+      `<tr><td><b>Total</b></td><td class="num"><b>${fuera}</b></td><td class="num"><b>${total}</b></td><td>${barra(disp)}</td></tr></tbody>`
+    : `<tbody><tr><td class="empty">Sin flota registrada.</td></tr></tbody>`;
+
+  // Por etapa
+  $("#tbl-etapas").innerHTML = `<thead><tr><th>Etapa</th><th class="num">Máquinas</th><th class="num">Plazo</th></tr></thead><tbody>` +
+    ETAPAS.slice(0, -1).map((e, i) => {
+      const n = act.filter((s) => s.etapa === i).length;
+      return `<tr><td>${i + 1}. ${esc(e.nombre)}</td><td class="num">${n}</td><td class="num muted">${sla(i)} d</td></tr>`;
+    }).join("") + `</tbody>`;
+
+  $("#atrasadas").innerHTML = rojas.length
+    ? `<ul class="fallas">` + rojas.sort((a, b) => semaforo(b).dias - semaforo(a).dias).map((s) =>
+        `<li><a href="#" data-open="${esc(s.id)}"><b>${esc(s.codigo)}</b></a> · ${esc(ETAPAS[s.etapa].nombre)} · <span class="pill r">${semaforo(s).txt}</span></li>`).join("") + `</ul>`
+    : `<p class="muted small">No hay etapas atrasadas.</p>`;
+}
+
+/* ===================== Render: activas ===================== */
+
+function opcionesCia(sel, incluirTodas = true) {
+  const cias = Array.from(new Set(state.fleet.map((m) => Number(m.compania)))).sort((a, b) => a - b);
+  const prev = sel.value;
+  sel.innerHTML = (incluirTodas ? `<option value="">Todas</option>` : "") +
+    cias.map((c) => `<option value="${c}">${esc(ciaLabel(c))}</option>`).join("");
+  if ([...sel.options].some((o) => o.value === prev)) sel.value = prev;
+}
+
+function renderActivas() {
+  opcionesCia($("#f-cia"));
+  const talleres = Array.from(new Set(abiertas().map((s) => s.taller).filter(Boolean))).sort();
+  const ft = $("#f-taller"), prevT = ft.value;
+  ft.innerHTML = `<option value="">Todos</option><option value="__sin">Sin asignar</option>` + talleres.map((t) => `<option>${esc(t)}</option>`).join("");
+  if ([...ft.options].some((o) => o.value === prevT)) ft.value = prevT;
+
+  const fc = $("#f-cia").value, fsv = $("#f-fs").value;
+  const lista = abiertas()
+    .filter((s) => fc === "" || String(s.compania) === fc)
+    .filter((s) => ft.value === "" || (ft.value === "__sin" ? !s.taller : s.taller === ft.value))
+    .filter((s) => fsv === "" || String(Number(!!s.fueraServicio)) === fsv)
+    .sort((a, b) => (b.fueraServicio - a.fueraServicio) || (semaforo(b).dias - sla(b.etapa)) - (semaforo(a).dias - sla(a.etapa)));
+
+  if (!lista.length) {
+    $("#tbl-activas").innerHTML = `<tbody><tr><td class="empty">No hay máquinas en reparación con estos filtros.</td></tr></tbody>`;
+    return;
+  }
+  $("#tbl-activas").innerHTML = `<thead><tr><th>Máquina / solicitud</th><th>Compañía</th><th>Taller</th><th>Avance</th><th>Etapa actual</th><th>Tiempo en etapa</th><th></th></tr></thead><tbody>` +
+    lista.map((s) => {
+      const m = maquina(s.maquinaId) || {};
+      const sem = semaforo(s);
+      const fallas = fallasDe(s);
+      return `<tr>
+        <td><a href="#" data-open="${esc(s.id)}" class="m-code">${esc(s.codigo)}</a> ${s.fueraServicio ? `<span class="tag-fs">FUERA DE SERVICIO</span>` : ""}
+          <div class="m-sub">${esc([m.marca, m.modelo].filter(Boolean).join(" "))}</div>
+          <div class="m-sub">Solicitud Nº ${esc(s.nroSolicitudCia)} · ${fmtFecha(s.fecha)}${s.nroIngreso ? " · Ingreso " + esc(s.nroIngreso) : ""}</div>
+          <div class="m-sub">${fallas.length} falla${fallas.length === 1 ? "" : "s"}: ${esc(primeraFalla(s))}${fallas.length > 1 ? "…" : ""}</div></td>
+        <td>${esc(ciaLabel(s.compania))}</td>
+        <td>${s.taller ? esc(s.taller) : `<span class="muted">Sin asignar</span>`}</td>
+        <td><span class="dots">${ETAPAS.map((_, i) => `<i class="${i <= s.etapa ? "on" : ""}"></i>`).join("")}</span></td>
+        <td>${esc(ETAPAS[s.etapa].nombre)}</td>
+        <td><span class="pill ${sem.cls}" title="Plazo: ${sla(s.etapa)} días">${sem.txt}</span></td>
+        <td><button class="btn sm" data-avanzar="${esc(s.id)}">Marcar: ${esc(ETAPAS[s.etapa].accion)}</button></td>
+      </tr>`;
+    }).join("") + `</tbody>`;
+}
+
+/* ===================== Render: formulario SRM ===================== */
+
+function renderFormSecciones() {
+  $("#srm-secciones").innerHTML = SECCIONES.map(([sec, items], si) =>
+    `<div class="sec-block"><h4><span>${esc(sec)}</span></h4>` +
+    items.map((it, ii) => `<label class="sec-item">
+        <input type="checkbox" data-sec="${si}" data-it="${ii}" aria-label="${esc(sec + " — " + it)}" />
+        <span class="lbl">${esc(it)}</span>
+        <input type="text" data-obs="${si}-${ii}" placeholder="Indicar falla del vehículo" />
+      </label>`).join("") + `</div>`).join("");
+  $("#srm-otros").innerHTML = "";
+  agregarOtro();
+}
+
+function agregarOtro() {
+  const d = document.createElement("div");
+  d.className = "sec-item";
+  d.style.gridTemplateColumns = "1fr";
+  d.innerHTML = `<input type="text" data-otro placeholder="Especificar (ej.: prueba hidrostática de cascada)" />`;
+  $("#srm-otros").appendChild(d);
+}
+
+function renderSelectMaquinas() {
+  const sel = $("#srm-maquina"), prev = sel.value;
+  const fs = fueraDeServicioPorMaquina();
+  const orden = state.fleet.slice().sort((a, b) => a.compania - b.compania || a.codigo.localeCompare(b.codigo, "es", { numeric: true }));
+  sel.innerHTML = `<option value="">— Seleccione —</option>` +
+    orden.map((m) => `<option value="${esc(m.id)}">${esc(m.codigo)} · ${esc(ciaLabel(m.compania))}${fs.has(m.id) ? " (fuera de servicio)" : ""}</option>`).join("");
+  if ([...sel.options].some((o) => o.value === prev)) sel.value = prev;
+  actualizarDatosMaquina();
+}
+
+function actualizarDatosMaquina() {
+  const m = maquina($("#srm-maquina").value);
+  const anio = ($("#srm-fecha").value || hoyISO()).slice(0, 4);
+  $("#srm-cia").value = m ? ciaLabel(m.compania) : "";
+  $("#srm-marca").value = m?.marca || "";
+  $("#srm-modelo").value = m?.modelo || "";
+  $("#srm-anio").value = m?.anio || "";
+  $("#srm-nro").value = m ? `${siguienteCorrelativo(m.compania, anio)}/${anio}` : "";
+  const previas = m ? abiertas().filter((s) => s.maquinaId === m.id) : [];
+  $("#srm-aviso").innerHTML = previas.length
+    ? `<div class="notice" style="margin-top:12px">${esc(m.codigo)} ya tiene ${previas.length === 1 ? "una solicitud abierta" : previas.length + " solicitudes abiertas"} (${previas.map((s) => `<a href="#" data-open="${esc(s.id)}">Nº ${esc(s.nroSolicitudCia)}</a>`).join(", ")}). Si es la misma falla, actualice esa solicitud en vez de crear otra.</div>`
+    : "";
+}
+
+async function registrarSRM(ev) {
+  ev.preventDefault();
+  const f = ev.target;
+  const m = maquina(f.maquinaId.value);
+  if (!m) { toast("Seleccione el vehículo."); return; }
+  const items = [];
+  $$("#srm-secciones input[type=checkbox]").forEach((cb) => {
+    const obs = $(`[data-obs="${cb.dataset.sec}-${cb.dataset.it}"]`).value.trim();
+    if (cb.checked || obs) {
+      const [sec, its] = SECCIONES[cb.dataset.sec];
+      items.push({ seccion: sec, item: its[cb.dataset.it], obs });
+    }
+  });
+  const otros = $$("[data-otro]").map((i) => i.value.trim()).filter(Boolean);
+  if (!items.length && !otros.length) { toast("Indique al menos una falla o trabajo a realizar."); return; }
+
+  const anio = f.fecha.value.slice(0, 4);
+  const correl = siguienteCorrelativo(m.compania, anio);
+  const ahora = new Date().toISOString();
+  const s = {
+    id: uid(), maquinaId: m.id, codigo: m.codigo, compania: Number(m.compania),
+    nroSolicitudCia: `${correl}/${anio}`, nroIngreso: "", nroOT: "",
+    solicita: f.solicita.value.trim(), capitan: f.capitan.value.trim(), fecha: f.fecha.value,
+    km: f.km.value, horometro: f.horometro.value, prioridad: f.prioridad.value,
+    fueraServicio: f.fueraServicio.checked, items, otros, infoAdicional: f.infoAdicional.value.trim(),
+    taller: "", presupuesto: "", notas: "",
+    etapa: 0, hitos: [{ etapa: 0, fecha: ahora, nota: "Solicitud registrada" }], creada: ahora,
+  };
+  state.correlativos[`${m.compania}-${anio}`] = correl;
+  if (f.km.value) m.km = f.km.value;
+  state.srms.push(s);
+  await guardar();
+  f.reset();
+  $("#srm-fecha").value = hoyISO();
+  renderFormSecciones();
+  renderTodo();
+  mostrarVista("activas");
+  abrirDetalle(s.id);
+  toast(`Solicitud ${s.nroSolicitudCia} de ${s.codigo} registrada.`);
+}
+
+/* ===================== Detalle, avance, correo, impresión ===================== */
+
+function abrirDetalle(id) {
+  const s = state.srms.find((x) => x.id === id);
+  if (!s) return;
+  const m = maquina(s.maquinaId) || {};
+  const sem = semaforo(s);
+  const cerrada = s.etapa === ETAPAS.length - 1;
+  $("#dlg-title").textContent = `${s.codigo} — Solicitud Nº ${s.nroSolicitudCia}`;
+  $("#dlg-sub").innerHTML = `${esc(ciaLabel(s.compania))} · ${esc([m.marca, m.modelo, m.anio].filter(Boolean).join(" "))} · ${s.fueraServicio ? `<span class="tag-fs">FUERA DE SERVICIO</span>` : "En servicio"}`;
+
+  const hitoDe = (i) => s.hitos.filter((h) => h.etapa === i).pop();
+  $("#dlg-body").innerHTML = `
+    <h3 style="margin-top:0">Avance</h3>
+    <ul class="timeline">${ETAPAS.map((e, i) => {
+      const h = hitoDe(i);
+      const cls = i < s.etapa || (cerrada && i === s.etapa) ? "done" : i === s.etapa ? "cur" : "";
+      return `<li class="${cls}"><span class="tdot"></span><span>${i + 1}. ${esc(e.nombre)}${h?.nota ? `<div class="m-sub">${esc(h.nota)}</div>` : ""}</span><span class="muted small">${h && i <= s.etapa ? fmtFecha(h.fecha) : ""}</span></li>`;
+    }).join("")}</ul>
+    ${cerrada ? "" : `<p class="small">Tiempo en la etapa actual: <span class="pill ${sem.cls}">${sem.txt}</span> <span class="muted">(plazo ${sla(s.etapa)} días)</span></p>`}
+    <div class="row-actions" style="margin:8px 0 4px">
+      ${cerrada ? "" : `<button class="btn" data-avanzar="${esc(s.id)}">Marcar: ${esc(ETAPAS[s.etapa].accion)}</button>`}
+      ${s.etapa > 0 ? `<button class="btn sec" data-retroceder="${esc(s.id)}">Deshacer último hito</button>` : ""}
+    </div>
+
+    <h3>Uso exclusivo Material Mayor</h3>
+    <form id="form-mm" class="form-grid" data-id="${esc(s.id)}">
+      <label>Nº de ingreso<input name="nroIngreso" value="${esc(s.nroIngreso)}" /></label>
+      <label>Nº orden de trabajo<input name="nroOT" value="${esc(s.nroOT)}" /></label>
+      <label>Taller / proveedor<input name="taller" list="talleres" value="${esc(s.taller)}" placeholder="CML o taller externo" /></label>
+      <label>Presupuesto ($)<input name="presupuesto" type="number" min="0" value="${esc(s.presupuesto)}" /></label>
+      <label class="field" style="flex-direction:row;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" name="fueraServicio" ${s.fueraServicio ? "checked" : ""} /> Fuera de servicio</label>
+      <label style="grid-column:1/-1">Información complementaria<textarea name="notas">${esc(s.notas)}</textarea></label>
+      <div class="row-actions"><button class="btn" type="submit">Guardar datos</button></div>
+    </form>
+    <datalist id="talleres">${Array.from(new Set(TALLERES_SUGERIDOS.concat(state.srms.map((x) => x.taller).filter(Boolean)))).map((t) => `<option value="${esc(t)}">`).join("")}</datalist>
+
+    <h3>Solicitud de la compañía</h3>
+    <dl class="kv">
+      <dt>Solicita</dt><dd>${esc(s.solicita)}</dd>
+      <dt>VºBº Capitán</dt><dd>${esc(s.capitan)}</dd>
+      <dt>Fecha</dt><dd>${fmtFecha(s.fecha)}</dd>
+      <dt>Km / horómetro</dt><dd>${esc(s.km || "—")} / ${esc(s.horometro || "—")}</dd>
+      <dt>Prioridad</dt><dd>${esc(s.prioridad)}</dd>
+    </dl>
+    <ul class="fallas">${fallasDe(s).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+    ${s.infoAdicional ? `<p class="small"><b>Información adicional:</b> ${esc(s.infoAdicional)}</p>` : ""}
+    <div class="row-actions" style="margin-top:14px">
+      <button class="btn sec" data-mail="${esc(s.id)}">Enviar por correo</button>
+      <button class="btn sec" data-copy="${esc(s.id)}">Copiar texto</button>
+      <button class="btn sec" data-print="${esc(s.id)}">Imprimir formulario</button>
+      <button class="btn sec" data-borrar="${esc(s.id)}">Eliminar solicitud</button>
+    </div>`;
+  const dlg = $("#dlg");
+  if (!dlg.open) dlg.showModal();
+}
+
+async function avanzar(id) {
+  const s = state.srms.find((x) => x.id === id);
+  if (!s || s.etapa >= ETAPAS.length - 1) return;
+  const sig = s.etapa + 1;
+  const nota = prompt(`Marcar "${ETAPAS[sig].nombre}" para ${s.codigo}.\nNota opcional (proveedor, monto, Nº de ingreso…):`, "");
+  if (nota === null) return;
+  s.etapa = sig;
+  s.hitos.push({ etapa: sig, fecha: new Date().toISOString(), nota: nota.trim() });
+  await guardar();
+  renderTodo();
+  if ($("#dlg").open) abrirDetalle(id);
+  toast(sig === ETAPAS.length - 1 ? `${s.codigo} entregada a la compañía.` : `${s.codigo}: ${ETAPAS[sig].nombre}.`);
+}
+
+async function retroceder(id) {
+  const s = state.srms.find((x) => x.id === id);
+  if (!s || s.etapa === 0) return;
+  if (!confirm(`¿Deshacer el hito "${ETAPAS[s.etapa].nombre}" de ${s.codigo}?`)) return;
+  const idx = s.hitos.map((h) => h.etapa).lastIndexOf(s.etapa);
+  if (idx >= 0) s.hitos.splice(idx, 1);
+  s.etapa -= 1;
+  await guardar();
+  renderTodo();
+  abrirDetalle(id);
+}
+
+function textoCorreo(s) {
+  const m = maquina(s.maquinaId) || {};
+  return [
+    `SOLICITUD DE REPARACIÓN O DE MANTENIMIENTO`,
+    `Vehículo: ${s.codigo} — ${[m.marca, m.modelo, m.anio].filter(Boolean).join(" ")}`,
+    `Compañía: ${ciaLabel(s.compania)} · Nº solicitud Cía.: ${s.nroSolicitudCia}`,
+    `Solicita: ${s.solicita}`,
+    `VºBº Capitán: ${s.capitan}`,
+    `Fecha: ${fmtFecha(s.fecha)} · Km: ${s.km || "—"} · Horómetro: ${s.horometro || "—"}`,
+    `Estado: ${s.fueraServicio ? "FUERA DE SERVICIO" : "En servicio"} · Prioridad: ${s.prioridad}`,
+    ``,
+    `REVISAR LO SIGUIENTE:`,
+    ...fallasDe(s).map((x) => `- ${x}`),
+    ...(s.infoAdicional ? [``, `Información adicional: ${s.infoAdicional}`] : []),
+  ].join("\n");
+}
+
+function enviarCorreo(id) {
+  const s = state.srms.find((x) => x.id === id);
+  const asunto = `SRM ${s.codigo} — ${ciaLabel(s.compania)} — Nº ${s.nroSolicitudCia}`;
+  const href = `mailto:${encodeURIComponent(cfg.to)}?cc=${encodeURIComponent(cfg.cc)}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(textoCorreo(s))}`;
+  window.location.href = href;
+}
+
+async function copiarTexto(id) {
+  const s = state.srms.find((x) => x.id === id);
+  try { await navigator.clipboard.writeText(textoCorreo(s)); toast("Texto copiado."); }
+  catch { prompt("Copie el texto:", textoCorreo(s)); }
+}
+
+function imprimir(id) {
+  const s = state.srms.find((x) => x.id === id);
+  const m = maquina(s.maquinaId) || {};
+  const marcados = new Map(s.items.map((i) => [i.seccion + "|" + i.item, i.obs]));
+  const hito = (i) => { const h = s.hitos.filter((x) => x.etapa === i).pop(); return h ? fmtFecha(h.fecha) : ""; };
+  $("#print-area").innerHTML = `
+    <table><tr><td colspan="2"><h1>CUERPO DE BOMBEROS DE SANTIAGO</h1>DEPARTAMENTO DE MATERIAL MAYOR</td>
+      <td>Nº Ingreso: ${esc(s.nroIngreso)}<br>Nº orden de trabajo: ${esc(s.nroOT)}</td></tr>
+    <tr><td colspan="3" style="text-align:center"><b>SOLICITUD DE REPARACIÓN O DE MANTENIMIENTO</b></td></tr>
+    <tr><td>VEHÍCULO: <b>${esc(s.codigo)}</b></td><td>COMPAÑÍA: ${esc(ciaLabel(s.compania))}</td><td>Nº solicitud Cía.: ${esc(s.nroSolicitudCia)}</td></tr>
+    <tr><td>SOLICITA: ${esc(s.solicita)}</td><td>MARCA: ${esc(m.marca)}</td><td>MODELO: ${esc(m.modelo)}</td></tr>
+    <tr><td>VºBº CAPITÁN: ${esc(s.capitan)}</td><td>AÑO: ${esc(m.anio)}</td><td>KM: ${esc(s.km)} · HORÓMETRO: ${esc(s.horometro)}</td></tr>
+    <tr><td>FECHA: ${fmtFecha(s.fecha)}</td><td colspan="2">${s.fueraServicio ? "<b>FUERA DE SERVICIO</b>" : "En servicio"} · Prioridad: ${esc(s.prioridad)}</td></tr></table>
+    <table style="margin-top:6px"><tr><th>REVISAR LO SIGUIENTE</th><th>X</th><th>OBSERVACIÓN</th></tr>
+    ${SECCIONES.map(([sec, its]) => `<tr><td colspan="3"><b>${esc(sec)}</b></td></tr>` + its.map((it) => {
+      const k = sec + "|" + it;
+      return `<tr><td>${esc(it)}</td><td style="text-align:center">${marcados.has(k) ? "X" : ""}</td><td style="color:#c00">${esc(marcados.get(k) || "")}</td></tr>`;
+    }).join("")).join("")}
+    <tr><td colspan="3"><b>OTROS (especificar)</b></td></tr>
+    ${(s.otros.length ? s.otros : [""]).map((o) => `<tr><td></td><td style="text-align:center">${o ? "X" : ""}</td><td style="color:#c00">${esc(o)}</td></tr>`).join("")}
+    </table>
+    <table style="margin-top:6px"><tr><td rowspan="4" style="width:60%"><b>INFORMACIÓN ADICIONAL COMPLEMENTARIA</b><br>${esc(s.infoAdicional)}<br>${esc(s.notas)}</td>
+      <td>Presupuesto</td><td>${hito(3)} ${s.presupuesto ? "$" + Number(s.presupuesto).toLocaleString("es-CL") : ""}</td></tr>
+      <tr><td>Aprobado</td><td>${hito(4)}</td></tr><tr><td>Ingreso</td><td>${hito(5)} ${esc(s.taller)}</td></tr><tr><td>Entrega</td><td>${hito(7)}</td></tr></table>
+    <table style="margin-top:30px"><tr><td style="height:50px;vertical-align:bottom;text-align:center">VºBº Inspector de M. Mayor</td><td style="vertical-align:bottom;text-align:center">VºBº Comandante del Área</td></tr></table>`;
+  window.print();
+}
+
+/* ===================== Historial ===================== */
+
+function renderHistorial() {
+  opcionesCia($("#h-cia"));
+  const q = $("#h-q").value.trim().toLowerCase();
+  const fc = $("#h-cia").value, fe = $("#h-estado").value;
+  const lista = state.srms
+    .filter((s) => fc === "" || String(s.compania) === fc)
+    .filter((s) => fe === "" || (fe === "cerrada") === (s.etapa === ETAPAS.length - 1))
+    .filter((s) => !q || [s.codigo, s.nroSolicitudCia, s.nroIngreso, s.taller, s.solicita, ...fallasDe(s)].join(" ").toLowerCase().includes(q))
+    .sort((a, b) => b.creada.localeCompare(a.creada));
+  $("#tbl-hist").innerHTML = lista.length
+    ? `<thead><tr><th>Fecha</th><th>Máquina</th><th>Compañía</th><th>Nº</th><th>Fallas</th><th>Taller</th><th>Etapa</th><th class="num">Días totales</th></tr></thead><tbody>` +
+      lista.map((s) => {
+        const fin = s.etapa === ETAPAS.length - 1 ? new Date(s.hitos[s.hitos.length - 1].fecha).getTime() : Date.now();
+        return `<tr><td>${fmtFecha(s.fecha)}</td><td><a href="#" data-open="${esc(s.id)}" class="m-code">${esc(s.codigo)}</a></td><td>${esc(ciaLabel(s.compania))}</td>
+          <td>${esc(s.nroSolicitudCia)}</td><td class="small">${fallasDe(s).length}</td><td>${esc(s.taller || "—")}</td>
+          <td>${s.etapa === ETAPAS.length - 1 ? `<span class="pill g">Entregada</span>` : esc(ETAPAS[s.etapa].nombre)}</td>
+          <td class="num">${diasDesde(s.creada, fin)}</td></tr>`;
+      }).join("") + `</tbody>`
+    : `<tbody><tr><td class="empty">Sin solicitudes.</td></tr></tbody>`;
+}
+
+function exportarCSV() {
+  const cab = ["Fecha", "Máquina", "Compañía", "Nº solicitud Cía", "Nº ingreso", "Nº OT", "Solicita", "Capitán", "Km", "Horómetro",
+    "Prioridad", "Fuera de servicio", "Taller", "Presupuesto", "Etapa", "Días totales", "Fallas", "Información adicional",
+    ...ETAPAS.map((e) => "Fecha: " + e.nombre)];
+  const filas = state.srms.map((s) => {
+    const fin = s.etapa === ETAPAS.length - 1 ? new Date(s.hitos[s.hitos.length - 1].fecha).getTime() : Date.now();
+    return [s.fecha, s.codigo, ciaLabel(s.compania), s.nroSolicitudCia, s.nroIngreso, s.nroOT, s.solicita, s.capitan, s.km, s.horometro,
+      s.prioridad, s.fueraServicio ? "Sí" : "No", s.taller, s.presupuesto, ETAPAS[s.etapa].nombre, diasDesde(s.creada, fin),
+      fallasDe(s).join(" | "), s.infoAdicional,
+      ...ETAPAS.map((_, i) => { const h = s.hitos.filter((x) => x.etapa === i).pop(); return h ? fmtFecha(h.fecha) : ""; })];
+  });
+  // Neutraliza fórmulas (=,+,-,@) al abrir en Excel.
+  const celda = (v) => { let t = String(v ?? ""); if (/^[=+\-@]/.test(t)) t = "'" + t; return `"${t.replace(/"/g, '""')}"`; };
+  const csv = "﻿" + [cab, ...filas].map((r) => r.map(celda).join(";")).join("\r\n");
+  descargar(`srm_material_mayor_${hoyISO()}.csv`, csv, "text/csv;charset=utf-8");
+}
+
+function descargar(nombre, contenido, tipo) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([contenido], { type: tipo }));
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+/* ===================== Flota ===================== */
+
+function renderFlota() {
+  const sel = $("#form-maq").tipo;
+  if (!sel.options.length) sel.innerHTML = TIPOS.map((t) => `<option>${t}</option>`).join("") + `<option value="Otro">Otro</option>`;
+  const fs = fueraDeServicioPorMaquina();
+  const orden = state.fleet.slice().sort((a, b) => a.compania - b.compania || a.codigo.localeCompare(b.codigo, "es", { numeric: true }));
+  $("#flota-count").textContent = `(${orden.length})`;
+  $("#tbl-flota").innerHTML = orden.length
+    ? `<thead><tr><th>Código</th><th>Tipo</th><th>Compañía</th><th>Marca / modelo</th><th class="num">Año</th><th class="num">Km</th><th>Estado</th><th></th></tr></thead><tbody>` +
+      orden.map((m) => `<tr><td class="m-code">${esc(m.codigo)}</td><td>${esc(m.tipo)}</td><td>${esc(ciaLabel(m.compania))}</td>
+        <td>${esc([m.marca, m.modelo].filter(Boolean).join(" ") || "—")}</td><td class="num">${esc(m.anio || "")}</td><td class="num">${esc(m.km || "")}</td>
+        <td>${fs.has(m.id) ? `<span class="pill r">Fuera de servicio</span>` : `<span class="pill g">En servicio</span>`}</td>
+        <td><div class="row-actions"><button class="btn sec sm" data-edit-maq="${esc(m.id)}">Editar</button><button class="btn sec sm" data-del-maq="${esc(m.id)}">Quitar</button></div></td></tr>`).join("") + `</tbody>`
+    : `<tbody><tr><td class="empty">Sin máquinas. Agréguelas arriba o pegue la flota desde Excel.</td></tr></tbody>`;
+}
+
+function normCodigo(c) { return String(c || "").trim().toUpperCase().replace(/\s+/g, ""); }
+
+async function guardarMaquina(ev) {
+  ev.preventDefault();
+  const f = ev.target;
+  const codigo = normCodigo(f.codigo.value);
+  const dup = state.fleet.find((m) => m.codigo === codigo && m.id !== f.maqId.value);
+  if (dup) { toast(`Ya existe una máquina ${codigo}.`); return; }
+  const datos = { codigo, tipo: f.tipo.value, compania: Number(f.compania.value), marca: f.marca.value.trim(), modelo: f.modelo.value.trim(), anio: f.anio.value };
+  if (f.maqId.value) Object.assign(maquina(f.maqId.value), datos);
+  else state.fleet.push(Object.assign({ id: uid(), km: "" }, datos));
+  await guardar();
+  f.reset();
+  f.maqId.value = "";
+  $("#maq-submit").textContent = "Agregar máquina";
+  renderTodo();
+  toast(`Máquina ${codigo} guardada.`);
+}
+
+async function importarFlota() {
+  const lineas = $("#flota-paste").value.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  let nuevas = 0, act = 0, malas = 0;
+  lineas.forEach((l) => {
+    const c = l.split(/\t|;/).map((x) => x.trim());
+    const codigo = normCodigo(c[0]);
+    const cia = Number(c[2]);
+    if (!codigo || /^c[oó]digo$/i.test(codigo) || Number.isNaN(cia)) { malas++; return; }
+    const tipo = (c[1] || codigo.replace(/[-\d]+$/, "")).toUpperCase();
+    const datos = { codigo, tipo, compania: cia, marca: c[3] || "", modelo: c[4] || "", anio: c[5] || "" };
+    const ex = state.fleet.find((m) => m.codigo === codigo);
+    if (ex) { Object.assign(ex, datos); act++; } else { state.fleet.push(Object.assign({ id: uid(), km: "" }, datos)); nuevas++; }
+  });
+  if (state.demo && nuevas) state.demo = false;
+  await guardar();
+  $("#flota-paste").value = "";
+  renderTodo();
+  toast(`${nuevas} nuevas, ${act} actualizadas${malas ? `, ${malas} filas ignoradas` : ""}.`);
+}
+
+/* ===================== Ajustes ===================== */
+
+function renderAjustes() {
+  $("#cfg-url").value = cfg.url;
+  $("#cfg-key").value = cfg.key;
+  $("#cfg-to").value = cfg.to;
+  $("#cfg-cc").value = cfg.cc;
+  $("#cfg-sla").innerHTML = ETAPAS.slice(0, -1).map((e, i) =>
+    `<label>${i + 1}. ${esc(e.nombre)}<input type="number" min="0" max="365" data-sla="${i}" value="${sla(i)}" /></label>`).join("");
+}
+
+/* ===================== Datos de demostración ===================== */
+
+function cargarDemo() {
+  // Flota FICTICIA con la misma cantidad por tipo que el cuadro de disponibilidad (57 piezas).
+  const conteo = { B: 17, BX: 8, BM: 2, Q: 5, RX: 8, RH: 2, M: 2, MX: 2, BT: 2, H: 3, RM: 2, UD: 1, Z: 3 };
+  const fleet = [];
+  let cia = 1;
+  Object.entries(conteo).forEach(([t, n]) => {
+    for (let i = 0; i < n; i++) {
+      fleet.push({ id: uid(), codigo: `${t}-${cia}`, tipo: t, compania: cia, marca: "", modelo: "", anio: "", km: "" });
+      cia = (cia % 22) + 1;
+    }
+  });
+  const b10 = fleet.find((m) => m.codigo === "B-10") || fleet[0];
+  Object.assign(b10, { codigo: "B-10", compania: 10, marca: "ROSENBAUER", modelo: "COMMANDER", anio: "2015", km: "34223.8" });
+
+  const hace = (d) => new Date(Date.now() - d * DAY).toISOString();
+  const srms = [];
+  const crear = (m, etapaHitos, extra) => {
+    const hitos = etapaHitos.map(([e, d, nota]) => ({ etapa: e, fecha: hace(d), nota: nota || "" }));
+    const etapa = hitos[hitos.length - 1].etapa;
+    srms.push(Object.assign({
+      id: uid(), maquinaId: m.id, codigo: m.codigo, compania: m.compania, nroSolicitudCia: `1/2026`,
+      nroIngreso: "", nroOT: "", solicita: "Maquinista (demo)", capitan: "Capitán (demo)", fecha: hace(etapaHitos[0][1]).slice(0, 10),
+      km: "", horometro: "", prioridad: "normal", fueraServicio: false, items: [], otros: [], infoAdicional: "",
+      taller: "", presupuesto: "", notas: "", etapa, hitos, creada: hitos[0].fecha,
+    }, extra));
+  };
+  crear(b10, [[0, 9], [1, 7, "Inspección en cuartel"]], {
+    nroSolicitudCia: "4/2026", fueraServicio: false, km: "34223.8",
+    items: [
+      { seccion: "FRENOS", item: "Retención pedal, mangueras, flexibles, presencia de fugas, tambores", obs: "Después del mantenimiento preventivo aumentó fuga del sistema de aire" },
+      { seccion: "SUSPENSIÓN", item: "Ballestas y/o paquetes de resortes, seguros, soportes", obs: "Revisar golpeteo de cabina al andar y crujidos al virar" },
+      { seccion: "MOTOR", item: "Filtros, cañerías, bombas, fugas", obs: "FUGA DE LÍQUIDO AZUL POR DESPICHE (APARENTE REFRIGERANTE)" },
+      { seccion: "CUERPO BOMBA", item: "Bomba centrífuga (alta)", obs: "Revisar sistema de alta presión, no conecta y tiene fuga de aire" },
+      { seccion: "CUERPO BOMBA", item: "Manómetros, llaves de paso, tablero", obs: "Válvulas neumáticas de las 3 aspiraciones de 6\" dejaron de funcionar" },
+    ],
+    otros: ["Prueba hidrostática y mantenimiento de cascada"],
+  });
+  const pick = (t, k) => fleet.filter((m) => m.tipo === t)[k];
+  crear(pick("B", 0), [[0, 30], [1, 28], [2, 26, "Taller externo"], [3, 18], [4, 15], [5, 12, "Ingreso taller externo"]], { fueraServicio: true, taller: "Taller externo A", items: [{ seccion: "CUERPO BOMBA", item: "Sello mecánico, cardán, retenes", obs: "Fuga en sello mecánico" }] });
+  crear(pick("B", 2), [[0, 6], [1, 5], [2, 4]], { fueraServicio: true, taller: "Taller externo B", items: [{ seccion: "MOTOR", item: "Motor de partida, sistema eléctrico", obs: "No arranca en frío" }] });
+  crear(pick("B", 4), [[0, 20], [1, 19], [2, 18], [3, 10]], { fueraServicio: true, taller: "Taller externo A", items: [{ seccion: "FRENOS", item: "Freno de estacionamiento: accionamiento y palanca", obs: "Freno de estacionamiento no retiene" }] });
+  crear(pick("BX", 0), [[0, 3]], { fueraServicio: true, items: [{ seccion: "NEUMÁTICOS", item: "Detalles, cortes, grietas", obs: "Corte lateral neumático trasero" }] });
+  crear(pick("BX", 3), [[0, 14], [1, 13], [2, 12], [3, 8], [4, 6], [5, 4, "CML"]], { fueraServicio: true, taller: "CML (taller institucional)", items: [{ seccion: "DIRECCIÓN", item: "Sistema hidráulico, manguera, ángulo de giro, volante, convergencia", obs: "Fuga hidráulica dirección" }] });
+  crear(pick("BX", 5), [[0, 40], [1, 38], [2, 35], [3, 30], [4, 26], [5, 25]], { fueraServicio: true, taller: "Taller externo C", items: [{ seccion: "MOTOR", item: "Embrague", obs: "Embrague patina" }] });
+  crear(pick("Q", 1), [[0, 10], [1, 9], [2, 5]], { fueraServicio: true, taller: "Proveedor escalas", items: [{ seccion: "ACCESORIOS E INSTRUMENTOS", item: "Otros", obs: "Escala no despliega tercer tramo" }] });
+  crear(pick("Q", 3), [[0, 16], [1, 15], [2, 14], [3, 9], [4, 2]], { fueraServicio: true, taller: "Proveedor escalas", items: [{ seccion: "TORRE DE ILUMINACIÓN", item: "Generador y torre de iluminación", obs: "Generador sin carga" }] });
+  crear(pick("RX", 2), [[0, 5], [1, 4]], { fueraServicio: true, items: [{ seccion: "LUCES Y SISTEMA ELÉCTRICO", item: "Cables, batería, alternador, bocina, alarma retroceso, conexiones", obs: "Alternador no carga" }] });
+  crear(pick("RX", 6), [[0, 22], [1, 20], [2, 19], [3, 12], [4, 11], [5, 8]], { fueraServicio: true, taller: "Taller externo B", items: [{ seccion: "SUSPENSIÓN", item: "Fijaciones de amortiguadores", obs: "Amortiguador delantero suelto" }] });
+  crear(pick("M", 0), [[0, 35], [1, 33], [2, 30], [3, 21], [4, 20], [5, 18]], { fueraServicio: true, taller: "Proveedor escalas", items: [{ seccion: "ACCESORIOS E INSTRUMENTOS", item: "Otros", obs: "Falla hidráulica de la escala" }] });
+  crear(pick("BT", 1), [[0, 8], [1, 7], [2, 6], [3, 3]], { fueraServicio: true, taller: "Taller externo A", items: [{ seccion: "CUERPO BOMBA", item: "Bomba de cebado", obs: "Bomba de cebado no ceba" }] });
+  crear(pick("RM", 0), [[0, 12], [1, 11], [2, 10], [3, 6], [4, 5], [5, 3, "CML"]], { fueraServicio: true, taller: "CML (taller institucional)", items: [{ seccion: "MANTENCIÓN", item: "Cambio de lubricantes, filtros, depuradores", obs: "Mantención 50.000 km + falla eléctrica" }] });
+  crear(pick("B", 6), [[0, 4], [1, 3]], { items: [{ seccion: "SISTEMAS DE ALARMAS", item: "Sirenas, sistema doble sonido", obs: "Sirena intermitente" }] });
+  crear(pick("H", 1), [[0, 2]], { items: [{ seccion: "CABINA Y CARROCERÍA", item: "Cierre de capot, espejo retrovisor interior, espejos", obs: "Espejo derecho roto" }] });
+  // Cerradas (para MTTR e historial)
+  crear(pick("B", 8), [[0, 60], [1, 58], [2, 55], [3, 50], [4, 47], [5, 45], [6, 36], [7, 35]], { fueraServicio: true, taller: "Taller externo A", items: [{ seccion: "MOTOR", item: "Filtros, cañerías, bombas, fugas", obs: "Fuga de aceite" }] });
+  crear(pick("Z", 0), [[0, 50], [1, 49], [2, 48], [3, 45], [4, 44], [5, 43], [6, 40], [7, 39]], { fueraServicio: true, taller: "CML (taller institucional)", items: [{ seccion: "FRENOS", item: "Otros", obs: "Cambio de balatas" }] });
+
+  const correlativos = {};
+  srms.forEach((s) => { correlativos[`${s.compania}-2026`] = Math.max(correlativos[`${s.compania}-2026`] || 0, parseInt(s.nroSolicitudCia, 10)); });
+  state = Object.assign(estadoVacio(), { version: state.version, demo: true, fleet, srms, correlativos, sla: state.sla || SLA_DEFAULT.slice() });
+}
+
+/* ===================== Eventos ===================== */
+
+function renderTodo() {
+  renderPanel();
+  renderActivas();
+  renderSelectMaquinas();
+  renderHistorial();
+  renderFlota();
+}
+
+document.addEventListener("click", (ev) => {
+  const t = ev.target.closest("[data-view],[data-open],[data-avanzar],[data-retroceder],[data-mail],[data-copy],[data-print],[data-borrar],[data-edit-maq],[data-del-maq]");
+  if (!t) return;
+  if (t.dataset.view) { mostrarVista(t.dataset.view); return; }
+  ev.preventDefault();
+  const d = t.dataset;
+  if (d.open) abrirDetalle(d.open);
+  else if (d.avanzar) avanzar(d.avanzar);
+  else if (d.retroceder) retroceder(d.retroceder);
+  else if (d.mail) enviarCorreo(d.mail);
+  else if (d.copy) copiarTexto(d.copy);
+  else if (d.print) imprimir(d.print);
+  else if (d.borrar) {
+    const s = state.srms.find((x) => x.id === d.borrar);
+    if (s && confirm(`¿Eliminar definitivamente la solicitud ${s.nroSolicitudCia} de ${s.codigo}?`)) {
+      state.srms = state.srms.filter((x) => x.id !== d.borrar);
+      guardar(); $("#dlg").close(); renderTodo();
+    }
+  } else if (d.editMaq) {
+    const m = maquina(d.editMaq), f = $("#form-maq");
+    f.maqId.value = m.id;
+    ["codigo", "tipo", "compania", "marca", "modelo", "anio"].forEach((k) => { f[k].value = m[k] ?? ""; });
+    $("#maq-submit").textContent = "Guardar cambios";
+    f.scrollIntoView({ behavior: "smooth", block: "center" });
+  } else if (d.delMaq) {
+    const m = maquina(d.delMaq);
+    if (state.srms.some((s) => s.maquinaId === m.id && s.etapa < ETAPAS.length - 1)) { toast(`${m.codigo} tiene solicitudes abiertas.`); return; }
+    if (confirm(`¿Quitar ${m.codigo} de la flota?`)) { state.fleet = state.fleet.filter((x) => x.id !== m.id); guardar(); renderTodo(); }
+  }
+});
+
+document.addEventListener("submit", async (ev) => {
+  if (ev.target.id !== "form-mm") return;
+  ev.preventDefault();
+  const f = ev.target, s = state.srms.find((x) => x.id === f.dataset.id);
+  Object.assign(s, { nroIngreso: f.nroIngreso.value.trim(), nroOT: f.nroOT.value.trim(), taller: f.taller.value.trim(), presupuesto: f.presupuesto.value, notas: f.notas.value.trim(), fueraServicio: f.fueraServicio.checked });
+  await guardar();
+  renderTodo();
+  toast("Datos guardados.");
+});
+
+$("#srm-secciones").addEventListener("input", (ev) => {
+  const k = ev.target.dataset.obs;
+  if (!k) return;
+  const [si, ii] = k.split("-");
+  $(`input[data-sec="${si}"][data-it="${ii}"]`).checked = ev.target.value.trim() !== "";
+});
+
+$("#form-srm").addEventListener("submit", registrarSRM);
+$("#form-srm").addEventListener("reset", () => setTimeout(() => { $("#srm-fecha").value = hoyISO(); renderFormSecciones(); actualizarDatosMaquina(); }));
+$("#srm-maquina").addEventListener("change", actualizarDatosMaquina);
+$("#srm-fecha").addEventListener("change", actualizarDatosMaquina);
+$("#add-otro").addEventListener("click", agregarOtro);
+["#f-cia", "#f-taller", "#f-fs"].forEach((s) => $(s).addEventListener("change", renderActivas));
+["#h-q", "#h-cia", "#h-estado"].forEach((s) => $(s).addEventListener("input", renderHistorial));
+$("#export-csv").addEventListener("click", exportarCSV);
+$("#form-maq").addEventListener("submit", guardarMaquina);
+$("#form-maq").addEventListener("reset", () => setTimeout(() => { $("#form-maq").maqId.value = ""; $("#maq-submit").textContent = "Agregar máquina"; }));
+$("#flota-import").addEventListener("click", importarFlota);
+$("#dlg-close").addEventListener("click", () => $("#dlg").close());
+
+$("#cfg-save").addEventListener("click", async () => {
+  cfg.url = $("#cfg-url").value.trim();
+  cfg.key = $("#cfg-key").value;
+  if (cfg.url && !/^https:\/\/script\.google(usercontent)?\.com\//.test(cfg.url)) { toast("La URL debe ser de script.google.com"); return; }
+  safeSet(CFG_KEY, JSON.stringify(cfg));
+  await sincronizarDesdeRemoto();
+  renderTodo();
+});
+$("#cfg-clear").addEventListener("click", () => { cfg.url = ""; cfg.key = ""; safeSet(CFG_KEY, JSON.stringify(cfg)); renderAjustes(); setSync("Datos locales"); });
+$("#cfg-mail-save").addEventListener("click", () => { cfg.to = $("#cfg-to").value.trim(); cfg.cc = $("#cfg-cc").value.trim(); safeSet(CFG_KEY, JSON.stringify(cfg)); toast("Correo guardado."); });
+$("#cfg-sla-save").addEventListener("click", async () => {
+  const nuevo = SLA_DEFAULT.slice();
+  $$("[data-sla]").forEach((i) => { nuevo[i.dataset.sla] = Math.max(0, Number(i.value) || 0); });
+  state.sla = nuevo;
+  await guardar();
+  renderTodo();
+  toast("Plazos guardados.");
+});
+$("#bk-export").addEventListener("click", () => descargar(`respaldo_material_mayor_${hoyISO()}.json`, JSON.stringify(state, null, 2), "application/json"));
+$("#bk-import").addEventListener("change", async (ev) => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (!Array.isArray(data.fleet) || !Array.isArray(data.srms)) throw new Error("formato inválido");
+    if (!confirm("Esto reemplaza todos los datos actuales. ¿Continuar?")) return;
+    state = Object.assign(estadoVacio(), data, { version: state.version });
+    await guardar();
+    renderTodo();
+    toast("Respaldo restaurado.");
+  } catch (e) { toast("No se pudo leer el respaldo: " + e.message); }
+  ev.target.value = "";
+});
+$("#demo-load").addEventListener("click", async () => {
+  if ((state.fleet.length || state.srms.length) && !confirm("Esto reemplaza los datos actuales por datos de demostración. ¿Continuar?")) return;
+  cargarDemo();
+  await guardar();
+  renderTodo();
+  mostrarVista("panel");
+});
+$("#wipe").addEventListener("click", async () => {
+  if (!confirm("¿Borrar toda la flota y todas las solicitudes?")) return;
+  const v = state.version;
+  state = estadoVacio();
+  state.version = v;
+  await guardar();
+  renderTodo();
+});
+
+/* ===================== Inicio ===================== */
+
+(async function init() {
+  cargarLocal();
+  $("#srm-fecha").value = hoyISO();
+  renderFormSecciones();
+  renderAjustes();
+  renderTodo();
+  const tab = safeGet("cbs-mmayor-tab");
+  if (tab && $("#view-" + tab)) mostrarVista(tab);
+  await sincronizarDesdeRemoto();
+  renderAjustes();
+  renderTodo();
+  // Refresca semáforos y cambios de otros usuarios cada 2 minutos.
+  setInterval(async () => { if (cfg.url && !$("#dlg").open) { await sincronizarDesdeRemoto(); renderTodo(); } else renderPanel(); }, 120000);
+})();
+</script>
+</body>
+</html>
